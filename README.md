@@ -19,7 +19,7 @@ Per instal·lar aquest script necessites:
 
 
 > [!IMPORTANT]
-> Més fàcila amb Firefox. Actualment Chrome ha posat més restriccions de seguretat, per tal que s'executi en Chrome cal un pas més, cal anar a la [configuració de les extensions]( chrome://extensions/), entrar a Tampermonkey i marcar _'Permet els scripts d'usuari'_ (i reiniciar Chrome).
+> Més fàcila amb Firefox. Actualment Chrome ha posat més restriccions de seguretat, per tal que s'executi en Chrome cal un pas més, cal anar a la [configuració de les extensions](chrome://extensions/), entrar a Tampermonkey i marcar _'Permet els scripts d'usuari'_ (i reiniciar Chrome). Trobareu la documentació com fer-ho a [tampermonkey.net, FAQ, Q209: Permission to execute userscripts](https://www.tampermonkey.net/faq.php?q=Q209&version=5.5.0&ext=dhdg&updated=true)
 
 
 ---
