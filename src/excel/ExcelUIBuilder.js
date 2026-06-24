@@ -9,12 +9,21 @@ export class ExcelUIBuilder {
      * @param {function} onVisualize Callback activat a l'apretar el botó del visualitzador
      * @param {import('../dataProviders/NotesDataProvider.js').NotesDataProvider} dataProvider - Proveïdor de dades de notes.
      */
-    constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null) {
+    /**
+     * @param {import('../PowerToysLogger.js').PowerToysLogger} logger
+     * @param {function} onDownload Callback activat a l'apretar el botó d'Excel
+     * @param {import('../ContainerUIBuilder.js').ContainerUIBuilder} containerBuilder - Constructor base del contenidor.
+     * @param {function} onVisualize Callback activat a l'apretar el botó del visualitzador
+     * @param {import('../dataProviders/NotesDataProvider.js').NotesDataProvider} dataProvider - Proveïdor de dades de notes.
+     * @param {function} onDownloadAll Callback per descarregar totes les avaluacions
+     */
+    constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null, onDownloadAll = null) {
         this.logger = logger;
         this.onDownload = onDownload;
         this.containerBuilder = containerBuilder;
         this.onVisualize = onVisualize;
         this.dataProvider = dataProvider;
+        this.onDownloadAll = onDownloadAll;
         this.maxAvaluacions = 4;
     }
 
@@ -64,6 +73,13 @@ export class ExcelUIBuilder {
         downloadButton.className = 'powertoy-excel-button powertoy-excel-download-button';
         downloadButton.textContent = 'Descarregar Excel';
 
+        const downloadAllButton = document.createElement('button');
+        downloadAllButton.id = 'btn-descargar-totes-xlsx';
+        downloadAllButton.className = 'powertoy-excel-button powertoy-excel-download-all-button';
+        downloadAllButton.textContent = 'Descarregar TOTES (Aval + Agregat)';
+        downloadAllButton.style.marginTop = '8px';
+        downloadAllButton.style.width = '100%';
+
         const visualizeButton = document.createElement('button');
         visualizeButton.id = 'btn-visualitzar-dades';
         visualizeButton.className = 'powertoy-excel-button powertoy-excel-visualize-button';
@@ -71,6 +87,10 @@ export class ExcelUIBuilder {
 
         actions.appendChild(downloadButton);
         actions.appendChild(visualizeButton);
+        if (this.onDownloadAll) {
+            actions.appendChild(downloadAllButton);
+        }
+
         panelContent.appendChild(title);
         panelContent.appendChild(document.createElement('br'));
         panelContent.appendChild(helpText);
@@ -87,6 +107,13 @@ export class ExcelUIBuilder {
             btnExcel.addEventListener('click', () => {
                 const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
                 this.onDownload(evaluation);
+            });
+        }
+
+        const btnExcelAll = container.querySelector('#btn-descargar-totes-xlsx');
+        if (btnExcelAll && this.onDownloadAll) {
+            btnExcelAll.addEventListener('click', () => {
+                this.onDownloadAll();
             });
         }
 

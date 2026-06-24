@@ -264,11 +264,11 @@ describe('ExcelNotesWorkbookBuilder', () => {
         expect(worksheet.getCell('D1').value).toBe('Mòdul 1');
         expect(worksheet.getCell('E1').value).toBe('Mòdul 1');
         expect(worksheet.getCell('F1').value).toBe('Mòdul 1');
-        
+
         expect(worksheet.getCell('G1').value).toBe('Mòdul 3');
         expect(worksheet.getCell('H1').value).toBe('Mòdul 3');
         expect(worksheet.getCell('I1').value).toBe('Mòdul 3');
-        
+
         expect(worksheet.getCell('J1').value).toBe('Mòdul 4');
         expect(worksheet.getCell('K1').value).toBe('Mòdul 4');
         expect(worksheet.getCell('L1').value).toBe('Mòdul 4');
@@ -329,5 +329,93 @@ describe('ExcelNotesWorkbookBuilder', () => {
         expect(worksheet.getColumn(2).width).toBeGreaterThan(18);
         expect(worksheet.getColumn(3).width).toBeLessThanOrEqual(14);
         expect(worksheet.getColumn(4).width).toBeLessThanOrEqual(14);
+    });
+
+    describe('Descàrrega totes les avaluacions', () => {
+        test('hauria de generar tots els fulls esperats', () => {
+            const dades = creaDadesAlumnes();
+            const workbook = builder.construeixWorkbookTotesLesAvaluacions(dades, 2);
+
+            expect(workbook.worksheets.map(ws => ws.name)).toEqual([
+                'Av 1',
+                'Av 2',
+                'Agregat',
+                'Notes Flat (Agregat)',
+            ]);
+        });
+
+        test('hauria de consolidar les notes al full Agregat (la darrera guanya)', () => {
+            const dades = [
+                {
+                    idAlumne: '1',
+                    nom: 'Alumne Test',
+                    avaluacions: [
+                        { id: 'av1', codi: 'A1' },
+                        { id: 'av2', codi: 'A2' },
+                    ],
+                    continguts: {
+                        av1: [
+                            { codi: 'M1', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A5' }, // A5 a l'Av 1
+                            { codi: 'M2', nom: 'Mòdul 2', jerarquia: '2', qualitativa: 'A8' },
+                        ],
+                        av2: [
+                            { codi: 'M1', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A9' }, // A9 a l'Av 2 (ha de guanyar)
+                            { codi: 'M3', nom: 'Mòdul 3', jerarquia: '2', qualitativa: 'A7' },
+                        ],
+                    },
+                },
+            ];
+
+            const workbook = builder.construeixWorkbookTotesLesAvaluacions(dades, 2);
+            const sheetAgregat = workbook.getWorksheet('Agregat');
+
+            // Files al full agregat (fila 3 és el primer alumne)
+            const fila = sheetAgregat.getRow(3).values.slice(1);
+
+            // Estructura esperada de columnes al full Agregat:
+            // [id, nom, n.conv, M1, prov, n.conv, M2, prov, n.conv, M3, prov]
+            // Nota: L'ordre és alfabètic per codi: M1, M2, M3
+
+            expect(sheetAgregat.getRow(2).values.slice(1)).toEqual([
+                'idAlumne', 'nom',
+                'n. convocatoria', 'M1', 'provisional',
+                'n. convocatoria', 'M2', 'provisional',
+                'n. convocatoria', 'M3', 'provisional'
+            ]);
+
+            // M1 ha de ser 9 (de l'av2)
+            expect(fila[3]).toBe(9);
+            // M2 ha de ser 8 (de l'av1)
+            expect(fila[6]).toBe(8);
+            // M3 ha de ser 7 (de l'av2)
+            expect(fila[9]).toBe(7);
+        });
+
+        test('hauria de generar el full Notes Flat (Agregat) amb dades consolidades', () => {
+            const dades = [
+                {
+                    idAlumne: '1',
+                    nom: 'Alumne Test',
+                    avaluacions: [
+                        { id: 'av1', codi: 'A1' },
+                        { id: 'av2', codi: 'A2' },
+                    ],
+                    continguts: {
+                        av1: [{ codi: 'M1', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A5' }],
+                        av2: [{ codi: 'M1', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A9' }],
+                    },
+                },
+            ];
+
+            const workbook = builder.construeixWorkbookTotesLesAvaluacions(dades, 2);
+            const sheetFlat = workbook.getWorksheet('Notes Flat (Agregat)');
+
+            const files = [];
+            sheetFlat.eachRow(row => files.push(row.values.slice(1)));
+
+            // Capçalera + 1 fila per M1 consolidat
+            expect(files.length).toBe(2);
+            expect(files[1][8]).toBe(9); // La nota de M1 ha de ser 9
+        });
     });
 });
