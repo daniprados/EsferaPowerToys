@@ -57,9 +57,7 @@ export class ExcelStyleManager {
             }
 
             .powertoy-excel-download-all-button {
-                background-color: #059669; /* Emerald 600 */
-                margin-top: 4px;
-                width: 100%;
+                background-color: #02573cff; /* Emerald 600 */
             }
 
             .powertoy-excel-visualize-button {
