@@ -10,16 +10,44 @@ export class ExcelNotesWorkbookBuilder {
     }
 
     /**
-     * Construeix el llibre Excel amb capçaleres, dades i estils.
+     * Construeix el llibre Excel amb capçaleres, dades i estils per a una sola avaluació.
      * @param {Array<Object>} dadesAlumnes
      * @param {number} evaluation
      * @returns {any}
      */
     construeixWorkbookNotes(dadesAlumnes, evaluation) {
-        const { header1, header2, files, spansModuls } = this.construeixTaulaNotes(dadesAlumnes, evaluation);
-
         const workbook = new this.excelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Notes');
+        this.afegeixFullAvaluacio(workbook, dadesAlumnes, evaluation, 'Notes');
+        this.afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation);
+        return workbook;
+    }
+
+    /**
+     * Construeix un llibre Excel amb totes les avaluacions i un full agregat.
+     * @param {Array<Object>} dadesAlumnes
+     * @param {number} maxAvaluacions
+     * @returns {any}
+     */
+    construeixWorkbookTotesLesAvaluacions(dadesAlumnes, maxAvaluacions) {
+        const workbook = new this.excelJS.Workbook();
+
+        for (let i = 1; i <= maxAvaluacions; i++) {
+            this.afegeixFullAvaluacio(workbook, dadesAlumnes, i, `Av ${i}`);
+        }
+
+        this.afegeixFullAvaluacio(workbook, dadesAlumnes, 'agregat', 'Agregat', maxAvaluacions);
+        this.afegeixFullNotesFlat(workbook, dadesAlumnes, 'agregat', maxAvaluacions);
+
+        return workbook;
+    }
+
+    /**
+     * Afegeix un full d'avaluació al workbook.
+     */
+    afegeixFullAvaluacio(workbook, dadesAlumnes, evaluation, sheetName, maxAvaluacions = 0) {
+        const { header1, header2, files, spansModuls } = this.construeixTaulaNotes(dadesAlumnes, evaluation, maxAvaluacions);
+
+        const worksheet = workbook.addWorksheet(sheetName);
         worksheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 2 }];
 
         worksheet.addRow(header1);
@@ -99,23 +127,25 @@ export class ExcelNotesWorkbookBuilder {
         });
 
         this.ajustaAmpladesColumnes(worksheet);
-        this.afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation);
-
-        return workbook;
+        return worksheet;
     }
 
     /**
      * Afegeix una pestanya normalitzada amb una fila per nota.
      */
-    afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation) {
-        const worksheet = workbook.addWorksheet('Notes Flat');
+    afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation, maxAvaluacions = 0) {
+        const suffix = evaluation === 'agregat' ? ' (Agregat)' : '';
+        const worksheet = workbook.addWorksheet(`Notes Flat${suffix}`);
         worksheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 1 }];
 
         const header = ['idAlumne', 'nom Alumne', 'Codi Mòdul', 'Nom Mòdul', 'Codi', 'Nom', 'Tipus', 'Subtipus', 'Nota'];
         worksheet.addRow(header);
 
         this.obtéAlumnesValids(dadesAlumnes).forEach(alumne => {
-            const notes = this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
+            const notes = evaluation === 'agregat'
+                ? this.obtéNotesAgregades(alumne, maxAvaluacions)
+                : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
+
             if (!Array.isArray(notes)) return;
 
             const modulsPerCodi = new Map(
@@ -273,15 +303,20 @@ export class ExcelNotesWorkbookBuilder {
     /**
      * Prepara la taula de notes mantenint l'estructura original d'exportació.
      * @param {Array<Object>} dadesAlumnes
+     * @param {number|'agregat'} evaluation
+     * @param {number} maxAvaluacions
      */
-    construeixTaulaNotes(dadesAlumnes, evaluation) {
+    construeixTaulaNotes(dadesAlumnes, evaluation, maxAvaluacions = 0) {
         // Filtra alumnes que no tinguin notes, per exemple si hi ha hagut error.
         const alumnesValids = this.obtéAlumnesValids(dadesAlumnes);
 
         const moduls = new Map();
 
         alumnesValids.forEach(alumne => {
-            const notes = this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
+            const notes = evaluation === 'agregat'
+                ? this.obtéNotesAgregades(alumne, maxAvaluacions)
+                : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
+
             if (!notes || !Array.isArray(notes)) return;
             notes.forEach(mod => {
                 if (!mod || !mod.codi) return;
@@ -329,7 +364,9 @@ export class ExcelNotesWorkbookBuilder {
         }
 
         const files = alumnesValids.map(alumne => {
-            const notes = this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
+            const notes = evaluation === 'agregat'
+                ? this.obtéNotesAgregades(alumne, maxAvaluacions)
+                : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
 
             const fila = [alumne.idAlumne ?? '', alumne.nom ?? ''];
             modulsArray.forEach(([codi, info]) => {
@@ -339,13 +376,13 @@ export class ExcelNotesWorkbookBuilder {
                 }
 
                 try {
-                    if (info.jerarquia == '2'){
+                    if (info.jerarquia == '2') {
                         fila.push(modData?.convocatoria ?? undefined);
                     }
                     fila.push(this.obtéValorNota(modData));
 
                     //nota provisional just després de la final
-                    if(info.jerarquia == '2'){
+                    if (info.jerarquia == '2') {
                         fila.push(modData?.provisional ?? undefined);
                     }
                 } catch {
@@ -375,7 +412,7 @@ export class ExcelNotesWorkbookBuilder {
     obtéNotesAvaluacioSeleccionada(alumne, evaluation) {
         let idAvaluacio = null;
         if (alumne.avaluacions && Array.isArray(alumne.avaluacions)) {
-            const ava = alumne.avaluacions[evaluation-1];
+            const ava = alumne.avaluacions[evaluation - 1];
             if (ava) {
                 idAvaluacio = ava.id;
             }
@@ -388,6 +425,33 @@ export class ExcelNotesWorkbookBuilder {
         const notesValues = Object.values(alumne.continguts);
         return notesValues.at(-2) || notesValues.at(-1) || [];
     }
+
+    /**
+     * Obté les notes agregades de totes les avaluacions.
+     * Si un mòdul apareix en més d'una avaluació, es conserva la darrera.
+     */
+    obtéNotesAgregades(alumne, maxAvaluacions) {
+        const mapNotes = new Map();
+
+        for (let i = 1; i <= maxAvaluacions; i++) {
+            let idAvaluacio = null;
+            if (alumne.avaluacions && Array.isArray(alumne.avaluacions)) {
+                const ava = alumne.avaluacions[i - 1];
+                if (ava) idAvaluacio = ava.id;
+            }
+
+            if (idAvaluacio && alumne.continguts[idAvaluacio]) {
+                const notes = alumne.continguts[idAvaluacio];
+                notes.forEach(nota => {
+                    // Sobreescrivim per conservar l'avaluació més recent
+                    mapNotes.set(nota.codi, nota);
+                });
+            }
+        }
+
+        return Array.from(mapNotes.values());
+    }
+
 
     /**
      * Normalitza una nota de contingut exactament igual que el full Notes.
