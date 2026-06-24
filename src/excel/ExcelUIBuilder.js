@@ -77,8 +77,6 @@ export class ExcelUIBuilder {
         downloadAllButton.id = 'btn-descargar-totes-xlsx';
         downloadAllButton.className = 'powertoy-excel-button powertoy-excel-download-all-button';
         downloadAllButton.textContent = 'Descarregar TOTES (Aval + Agregat)';
-        downloadAllButton.style.marginTop = '8px';
-        downloadAllButton.style.width = '100%';
 
         const visualizeButton = document.createElement('button');
         visualizeButton.id = 'btn-visualitzar-dades';
