@@ -84,9 +84,7 @@ export class ExcelUIBuilder {
 
         actions.appendChild(downloadButton);
         actions.appendChild(visualizeButton);
-        if (this.onDownloadAll) {
-            actions.appendChild(downloadAllButton);
-        }
+
 
         panelContent.appendChild(title);
         panelContent.appendChild(document.createElement('br'));
