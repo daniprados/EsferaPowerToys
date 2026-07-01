@@ -58,6 +58,10 @@ export class ExcelUIBuilder {
         const select = document.createElement('select');
         select.id = 'powertoys-evaluation-select';
         select.className = 'powertoy-excel-evaluation-select';
+        const optionTotes = document.createElement('option');
+        optionTotes.value = 'totes';
+        optionTotes.textContent = `Descarregar totes les avaluacions`;
+        select.appendChild(optionTotes);
         for (let i = 1; i <= this.maxAvaluacions; i++) {
             const option = document.createElement('option');
             option.value = `${i}`;
@@ -72,11 +76,6 @@ export class ExcelUIBuilder {
         downloadButton.id = 'btn-descargar-xlsx';
         downloadButton.className = 'powertoy-excel-button powertoy-excel-download-button';
         downloadButton.textContent = 'Descarregar Excel';
-
-        const downloadAllButton = document.createElement('button');
-        downloadAllButton.id = 'btn-descargar-totes-xlsx';
-        downloadAllButton.className = 'powertoy-excel-button powertoy-excel-download-all-button';
-        downloadAllButton.textContent = 'Descarregar TOTES (Aval + Agregat)';
 
         const visualizeButton = document.createElement('button');
         visualizeButton.id = 'btn-visualitzar-dades';
@@ -103,15 +102,12 @@ export class ExcelUIBuilder {
         const selectAvaluacio = container.querySelector('#powertoys-evaluation-select');
         if (btnExcel) {
             btnExcel.addEventListener('click', () => {
-                const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
-                this.onDownload(evaluation);
-            });
-        }
-
-        const btnExcelAll = container.querySelector('#btn-descargar-totes-xlsx');
-        if (btnExcelAll && this.onDownloadAll) {
-            btnExcelAll.addEventListener('click', () => {
-                this.onDownloadAll();
+                if (selectAvaluacio && selectAvaluacio.value === 'totes') {
+                    this.onDownloadAll();
+                } else {
+                    const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
+                    this.onDownload(evaluation);
+                }
             });
         }
 
