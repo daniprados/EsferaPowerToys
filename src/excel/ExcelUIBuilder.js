@@ -8,13 +8,6 @@ export class ExcelUIBuilder {
      * @param {import('../ContainerUIBuilder.js').ContainerUIBuilder} containerBuilder - Constructor base del contenidor.
      * @param {function} onVisualize Callback activat a l'apretar el botó del visualitzador
      * @param {import('../dataProviders/NotesDataProvider.js').NotesDataProvider} dataProvider - Proveïdor de dades de notes.
-     */
-    /**
-     * @param {import('../PowerToysLogger.js').PowerToysLogger} logger
-     * @param {function} onDownload Callback activat a l'apretar el botó d'Excel
-     * @param {import('../ContainerUIBuilder.js').ContainerUIBuilder} containerBuilder - Constructor base del contenidor.
-     * @param {function} onVisualize Callback activat a l'apretar el botó del visualitzador
-     * @param {import('../dataProviders/NotesDataProvider.js').NotesDataProvider} dataProvider - Proveïdor de dades de notes.
      * @param {function} onDownloadAll Callback per descarregar totes les avaluacions
      */
     constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null, onDownloadAll = null) {

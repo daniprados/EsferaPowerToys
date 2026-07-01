@@ -34,4 +34,21 @@ describe('ExcelUIBuilder', () => {
         expect(onVisualize).toHaveBeenCalledWith(2);
         expect(onDownload).toHaveBeenCalledWith(2);
     });
+
+    test('hauria d’executar onDownloadAll quan es selecciona "totes"', async () => {
+        const onDownload = jest.fn();
+        const onVisualize = jest.fn();
+        const onDownloadAll = jest.fn();
+        const containerBuilder = {
+            createContainer: jest.fn((content) => content),
+        };
+        const builder = new ExcelUIBuilder({ log: jest.fn() }, onDownload, containerBuilder, onVisualize, null, onDownloadAll);
+
+        const panel = await builder.createPanel(document.createElement('table'));
+        panel.querySelector('#powertoys-evaluation-select').value = 'totes';
+        panel.querySelector('#btn-descargar-xlsx').click();
+
+        expect(onDownloadAll).toHaveBeenCalled();
+        expect(onDownload).not.toHaveBeenCalled();
+    });
 });
