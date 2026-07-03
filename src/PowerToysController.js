@@ -90,7 +90,6 @@ export class PowerToysController {
             this.containerBuilder,
             (evaluation) => this.visualitzadorManager.obreVisualitzador(evaluation),
             notesDataProvider,
-            () => this.excelExportManager.procésDescàrregaTotesLesAvaluacions()
         );
 
         /** @type {MateriaFeatureManager} */

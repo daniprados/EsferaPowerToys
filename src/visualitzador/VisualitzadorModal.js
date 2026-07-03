@@ -9,6 +9,7 @@ export class VisualitzadorModal {
         this.students = [];
         this.currentIndex = 0;
         this.overlay = null;
+        this.contextText = '';
         this.previouslyFocusedElement = null;
         this.handleKeyDown = (event) => {
             if (event.key === 'Tab') {
@@ -30,8 +31,9 @@ export class VisualitzadorModal {
     /**
      * Obre el modal i selecciona automàticament el primer alumne.
      */
-    open(students) {
+    open(students, contextText = '') {
         this.students = students || [];
+        this.contextText = contextText;
         this.currentIndex = 0;
         this.previouslyFocusedElement = document.activeElement;
         this.injectStyles();
@@ -63,6 +65,7 @@ export class VisualitzadorModal {
         overlay.innerHTML = `
             <div class="ptv-top-bar">
                 <div class="ptv-brand">Esfera <span>PowerToys</span></div>
+                <div class="ptv-context-badge" aria-live="polite"></div>
                 <div class="ptv-select-wrap">
                     <label for="ptv-student-select">Alumne</label>
                     <button type="button" class="ptv-nav-btn" data-action="previous" aria-label="Alumne anterior">← Anterior (←)</button>
@@ -74,6 +77,7 @@ export class VisualitzadorModal {
             <div class="ptv-student-view"></div>
         `;
 
+        overlay.querySelector('.ptv-context-badge').textContent = this.contextText;
         overlay.querySelector('[data-action="close"]').addEventListener('click', () => this.close());
         overlay.querySelector('[data-action="previous"]').addEventListener('click', () => this.selectIndex(this.currentIndex - 1));
         overlay.querySelector('[data-action="next"]').addEventListener('click', () => this.selectIndex(this.currentIndex + 1));
@@ -184,6 +188,7 @@ export class VisualitzadorModal {
             .ptv-overlay * { box-sizing:border-box; }
             .ptv-top-bar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 24px; border-bottom:1px solid var(--ptv-border); background:var(--ptv-surface); flex:0 0 auto; flex-wrap:wrap; }
             .ptv-brand { font-size:2.2rem; font-weight:700; color:var(--ptv-accent); } .ptv-brand span { color:var(--ptv-muted); font-weight:400; }
+            .ptv-context-badge { color:var(--ptv-accent); border:1px solid var(--ptv-border); border-radius:999px; padding:7px 12px; font-size:1.28rem; font-weight:700; white-space:nowrap; background:var(--ptv-surface2); }
             .ptv-select-wrap { display:flex; align-items:center; gap:10px; flex:1; justify-content:center; min-width:280px; } .ptv-select-wrap label { color:var(--ptv-muted); text-transform:uppercase; font-size:1.44rem; letter-spacing:.08em; }
             #ptv-student-select.ptv-student-select { min-width:260px; max-width:460px; height:45px !important; min-height:45px; flex:1; background:var(--ptv-surface2); color:var(--ptv-text); border:1px solid var(--ptv-border); border-radius:8px; padding:9px 12px; font-size:1.4rem; line-height:1.2; }
             .ptv-close-btn, .ptv-nav-btn { background:transparent; color:var(--ptv-muted); border:1px solid var(--ptv-border); border-radius:8px; padding:9px 14px; cursor:pointer; font-size:1.4rem; } .ptv-close-btn:hover, .ptv-nav-btn:hover:not(:disabled) { color:var(--ptv-accent); border-color:var(--ptv-accent); } .ptv-nav-btn:disabled { opacity:.45; cursor:not-allowed; }

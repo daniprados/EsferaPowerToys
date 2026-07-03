@@ -1,3 +1,5 @@
+import { NotesAggregationHelper } from '../dataProviders/NotesAggregationHelper.js';
+
 /**
  * Classe per a la creació i gestió del panell de descàrrega de notes en Excel.
  */
@@ -8,15 +10,13 @@ export class ExcelUIBuilder {
      * @param {import('../ContainerUIBuilder.js').ContainerUIBuilder} containerBuilder - Constructor base del contenidor.
      * @param {function} onVisualize Callback activat a l'apretar el botó del visualitzador
      * @param {import('../dataProviders/NotesDataProvider.js').NotesDataProvider} dataProvider - Proveïdor de dades de notes.
-     * @param {function} onDownloadAll Callback per descarregar totes les avaluacions
      */
-    constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null, onDownloadAll = null) {
+    constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null) {
         this.logger = logger;
         this.onDownload = onDownload;
         this.containerBuilder = containerBuilder;
         this.onVisualize = onVisualize;
         this.dataProvider = dataProvider;
-        this.onDownloadAll = onDownloadAll;
         this.maxAvaluacions = 4;
     }
 
@@ -52,8 +52,8 @@ export class ExcelUIBuilder {
         select.id = 'powertoys-evaluation-select';
         select.className = 'powertoy-excel-evaluation-select';
         const optionTotes = document.createElement('option');
-        optionTotes.value = 'totes';
-        optionTotes.textContent = `Descarregar totes les avaluacions`;
+        optionTotes.value = NotesAggregationHelper.MODE_AGREGAT;
+        optionTotes.textContent = `Totes les avaluacions (Agregat)`;
         select.appendChild(optionTotes);
         for (let i = 1; i <= this.maxAvaluacions; i++) {
             const option = document.createElement('option');
@@ -68,12 +68,12 @@ export class ExcelUIBuilder {
         const downloadButton = document.createElement('button');
         downloadButton.id = 'btn-descargar-xlsx';
         downloadButton.className = 'powertoy-excel-button powertoy-excel-download-button';
-        downloadButton.textContent = 'Descarregar Excel';
+        downloadButton.textContent = this.obtéTextBotóDescarrega(select.value);
 
         const visualizeButton = document.createElement('button');
         visualizeButton.id = 'btn-visualitzar-dades';
         visualizeButton.className = 'powertoy-excel-button powertoy-excel-visualize-button';
-        visualizeButton.textContent = 'Visualitzar dades (preview)';
+        visualizeButton.textContent = this.obtéTextBotóVisualitzador(select.value);
 
         actions.appendChild(downloadButton);
         actions.appendChild(visualizeButton);
@@ -93,24 +93,63 @@ export class ExcelUIBuilder {
         const selectAvaluacio = container.querySelector('#powertoys-evaluation-select');
         if (btnExcel) {
             btnExcel.addEventListener('click', () => {
-                if (selectAvaluacio && selectAvaluacio.value === 'totes') {
-                    this.onDownloadAll();
-                } else {
-                    const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
-                    this.onDownload(evaluation);
-                }
+                const evaluation = this.obtéAvaluacioSeleccionada(selectAvaluacio);
+                this.onDownload(evaluation);
             });
         }
 
         const btnVisualitzar = container.querySelector('#btn-visualitzar-dades');
+        if (selectAvaluacio && btnVisualitzar && btnExcel) {
+            selectAvaluacio.addEventListener('change', () => {
+                btnExcel.textContent = this.obtéTextBotóDescarrega(selectAvaluacio.value);
+                btnVisualitzar.textContent = this.obtéTextBotóVisualitzador(selectAvaluacio.value);
+            });
+        }
+
         if (btnVisualitzar && this.onVisualize) {
             btnVisualitzar.addEventListener('click', () => {
-                const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
+                const evaluation = this.obtéAvaluacioSeleccionada(selectAvaluacio);
                 this.onVisualize(evaluation);
             });
         }
 
         this.logger.log('ExcelUIBuilder → panell creat');
         return container;
+    }
+
+    /**
+     * Obté el mode seleccionat: agregat canònic o avaluació numèrica segura.
+     * @param {HTMLSelectElement|null} selectAvaluacio
+     * @returns {number|typeof NotesAggregationHelper.MODE_AGREGAT}
+     */
+    obtéAvaluacioSeleccionada(selectAvaluacio) {
+        if (selectAvaluacio?.value === NotesAggregationHelper.MODE_AGREGAT) {
+            return NotesAggregationHelper.MODE_AGREGAT;
+        }
+
+        const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
+        return Number.isNaN(evaluation) ? 1 : evaluation;
+    }
+
+    /**
+     * Obté el text del botó de descàrrega segons l'avaluació seleccionada.
+     * @param {string} evaluation
+     * @returns {string}
+     */
+    obtéTextBotóDescarrega(evaluation) {
+        return evaluation === NotesAggregationHelper.MODE_AGREGAT
+            ? 'Descarregar Excel totes les avaluacions (agregat)'
+            : 'Descarregar Excel avaluació ' + evaluation;
+    }
+
+    /**
+     * Obté el text del botó del visualitzador segons l'avaluació seleccionada.
+     * @param {string} evaluation
+     * @returns {string}
+     */
+    obtéTextBotóVisualitzador(evaluation) {
+        return evaluation === NotesAggregationHelper.MODE_AGREGAT
+            ? 'Visualització agregats'
+            : 'Visualització avaluació ' + evaluation;
     }
 }

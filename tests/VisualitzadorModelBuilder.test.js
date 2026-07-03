@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, jest } from '@jest/globals';
 import { VisualitzadorModelBuilder } from '../src/visualitzador/VisualitzadorModelBuilder.js';
 
 describe('VisualitzadorModelBuilder', () => {
@@ -70,5 +70,58 @@ describe('VisualitzadorModelBuilder', () => {
         expect(builder.scoreClass('CV')).toBe('pass');
         expect(builder.finalClass('CV')).toBe('pass');
         expect(builder.finalClass('XM')).toBe('pass');
+    });
+
+    test('hauria d’agregar totes les avaluacions amb la mateixa semàntica que el full Agregat', () => {
+        const model = builder.construeixModel([
+            {
+                idAlumne: '1',
+                nom: 'Cognom, Nom',
+                avaluacions: [
+                    { codi: 'FINAL_1', id: 'ava1' },
+                    { codi: 'FINAL_2', id: 'ava2' },
+                ],
+                continguts: {
+                    ava1: [
+                        { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A6' },
+                        { codi: 'M01_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A5' },
+                        { codi: 'M02', nom: 'Mòdul 2', jerarquia: '2', qualitativa: 'A4' },
+                    ],
+                    ava2: [
+                        { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A8' },
+                    ],
+                },
+            },
+        ], 'agregat', 2);
+
+        expect(model.students[0].subjects).toEqual([
+            {
+                code: 'M01',
+                name: 'Mòdul 1',
+                final: 8,
+                ras: [{ key: '01RA', raw: 5 }],
+            },
+            {
+                code: 'M02',
+                name: 'Mòdul 2',
+                final: 4,
+                ras: [],
+            },
+        ]);
+    });
+
+    test('hauria d’usar el helper compartit per resoldre l’agregació canònica', () => {
+        const notesAgregades = [{ codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A7' }];
+        const aggregationHelper = {
+            ésModeAgregació: jest.fn(evaluation => evaluation === 'agregat'),
+            obtéNotesAgregades: jest.fn(() => notesAgregades),
+        };
+        builder = new VisualitzadorModelBuilder(undefined, aggregationHelper);
+
+        const model = builder.construeixModel([{ idAlumne: '1', nom: 'Cognom, Nom', continguts: {}, avaluacions: [] }], 'agregat', 2);
+
+        expect(aggregationHelper.ésModeAgregació).toHaveBeenCalledWith('agregat');
+        expect(aggregationHelper.obtéNotesAgregades).toHaveBeenCalledWith(expect.any(Object), 2);
+        expect(model.students[0].subjects[0].final).toBe(7);
     });
 });
