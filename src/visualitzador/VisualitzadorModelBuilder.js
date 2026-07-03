@@ -13,7 +13,7 @@ export class VisualitzadorModelBuilder {
     /**
      * Converteix les dades d'alumnes en un model orientat a renderitzar el resum visual.
      * @param {Array<Object>} dadesAlumnes
-     * @param {number|'agregat'} evaluation
+     * @param {number|typeof NotesAggregationHelper.MODE_AGREGAT} evaluation
      * @param {number} maxAvaluacions
      * @returns {{students: Array<Object>}}
      */
@@ -48,7 +48,7 @@ export class VisualitzadorModelBuilder {
      * Obté el bloc de notes corresponent a l'avaluació seleccionada.
      */
     obtéNotesAvaluació(alumne, evaluation, maxAvaluacions = 0) {
-        if (evaluation === 'agregat') {
+        if (this.notesAggregationHelper.ésModeAgregació(evaluation)) {
             return this.notesAggregationHelper.obtéNotesAgregades(alumne, maxAvaluacions);
         }
 

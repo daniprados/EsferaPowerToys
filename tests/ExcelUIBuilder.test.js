@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import { ExcelUIBuilder } from '../src/excel/ExcelUIBuilder.js';
+import { NotesAggregationHelper } from '../src/dataProviders/NotesAggregationHelper.js';
 
 describe('ExcelUIBuilder', () => {
     beforeEach(() => {
@@ -37,7 +38,7 @@ describe('ExcelUIBuilder', () => {
         expect(onDownload).toHaveBeenCalledWith(2);
     });
 
-    test('hauria d’activar la descàrrega de totes les avaluacions quan se selecciona totes', async () => {
+    test('hauria d’activar la descàrrega agregada pel callback de descàrrega normal', async () => {
         const onDownload = jest.fn();
         const onDownloadAll = jest.fn();
         const containerBuilder = {
@@ -46,14 +47,14 @@ describe('ExcelUIBuilder', () => {
         const builder = new ExcelUIBuilder({ log: jest.fn() }, onDownload, containerBuilder, null, null, onDownloadAll);
 
         const panel = await builder.createPanel(document.createElement('table'));
-        panel.querySelector('#powertoys-evaluation-select').value = 'totes';
+        panel.querySelector('#powertoys-evaluation-select').value = 'agregat';
         panel.querySelector('#btn-descargar-xlsx').click();
 
-        expect(onDownloadAll).toHaveBeenCalledTimes(1);
-        expect(onDownload).not.toHaveBeenCalled();
+        expect(onDownload).toHaveBeenCalledWith(NotesAggregationHelper.MODE_AGREGAT);
+        expect(onDownloadAll).not.toHaveBeenCalled();
     });
 
-    test('hauria de no fallar si falta el callback de totes les avaluacions', async () => {
+    test('hauria de descarregar agregat encara que no hi hagi callback antic de totes les avaluacions', async () => {
         const onDownload = jest.fn();
         const containerBuilder = {
             createContainer: jest.fn((content) => content),
@@ -61,13 +62,13 @@ describe('ExcelUIBuilder', () => {
         const builder = new ExcelUIBuilder({ log: jest.fn() }, onDownload, containerBuilder);
 
         const panel = await builder.createPanel(document.createElement('table'));
-        panel.querySelector('#powertoys-evaluation-select').value = 'totes';
+        panel.querySelector('#powertoys-evaluation-select').value = 'agregat';
 
         expect(() => panel.querySelector('#btn-descargar-xlsx').click()).not.toThrow();
-        expect(onDownload).not.toHaveBeenCalled();
+        expect(onDownload).toHaveBeenCalledWith(NotesAggregationHelper.MODE_AGREGAT);
     });
 
-    test('hauria d’enviar totes al visualitzador quan se seleccionen totes les avaluacions', async () => {
+    test('hauria d’enviar agregat al visualitzador quan se seleccionen totes les avaluacions', async () => {
         const onVisualize = jest.fn();
         const containerBuilder = {
             createContainer: jest.fn((content) => content),
@@ -75,10 +76,10 @@ describe('ExcelUIBuilder', () => {
         const builder = new ExcelUIBuilder({ log: jest.fn() }, jest.fn(), containerBuilder, onVisualize);
 
         const panel = await builder.createPanel(document.createElement('table'));
-        panel.querySelector('#powertoys-evaluation-select').value = 'totes';
+        panel.querySelector('#powertoys-evaluation-select').value = 'agregat';
         panel.querySelector('#btn-visualitzar-dades').click();
 
-        expect(onVisualize).toHaveBeenCalledWith('totes');
+        expect(onVisualize).toHaveBeenCalledWith('agregat');
         expect(onVisualize).not.toHaveBeenCalledWith(1);
         expect(onVisualize).not.toHaveBeenCalledWith(NaN);
     });
@@ -91,6 +92,7 @@ describe('ExcelUIBuilder', () => {
 
         const panel = await builder.createPanel(document.createElement('table'));
 
+        expect(panel.querySelector('#powertoys-evaluation-select').value).toBe('agregat');
         expect(panel.querySelector('#btn-descargar-xlsx').textContent).toBe('Descarregar Excel totes les avaluacions (agregat)');
         expect(panel.querySelector('#btn-visualitzar-dades').textContent).toBe('Visualització agregats');
     });
@@ -114,7 +116,7 @@ describe('ExcelUIBuilder', () => {
         expect(downloadButton.textContent).toBe('Descarregar Excel avaluació 2');
         expect(visualizeButton.textContent).toBe('Visualització avaluació 2');
 
-        select.value = 'totes';
+        select.value = 'agregat';
         select.dispatchEvent(new window.Event('change'));
         expect(downloadButton.textContent).toBe('Descarregar Excel totes les avaluacions (agregat)');
         expect(visualizeButton.textContent).toBe('Visualització agregats');

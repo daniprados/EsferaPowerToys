@@ -94,6 +94,48 @@ describe('ExcelNotesWorkbookBuilder', () => {
         expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, undefined, 8, undefined]);
     });
 
+    test('hauria d’aplicar l’agregació només amb el mode agregat canònic', () => {
+        const worksheet = builder.construeixWorkbookNotes([
+            {
+                idAlumne: '1',
+                nom: 'Alumna',
+                avaluacions: [
+                    { codi: 'FINAL_1', id: 'ava1' },
+                    { codi: 'FINAL_2', id: 'ava2' },
+                ],
+                continguts: {
+                    ava1: [
+                        { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A6' },
+                        { codi: 'M02', nom: 'Mòdul 2', jerarquia: '2', qualitativa: 'A5' },
+                    ],
+                    ava2: [
+                        { codi: 'M02', nom: 'Mòdul 2', jerarquia: '2', qualitativa: 'A9' },
+                    ],
+                },
+            },
+        ], 'agregat', 2).getWorksheet('Notes');
+
+        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M01', 'provisional', 'n. convocatoria', 'M02', 'provisional']);
+        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, undefined, 9, undefined]);
+    });
+
+    test('hauria d’usar el helper compartit per resoldre l’agregació canònica', () => {
+        const notesAgregades = [{ codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A7' }];
+        const aggregationHelper = {
+            ésModeAgregació: jest.fn(evaluation => evaluation === 'agregat'),
+            obtéNotesAgregades: jest.fn(() => notesAgregades),
+        };
+        builder = new ExcelNotesWorkbookBuilder(ExcelJS, undefined, aggregationHelper);
+
+        const worksheet = builder.construeixWorkbookNotes([
+            { idAlumne: '1', nom: 'Alumna', continguts: {}, avaluacions: [] },
+        ], 'agregat', 2).getWorksheet('Notes');
+
+        expect(aggregationHelper.ésModeAgregació).toHaveBeenCalledWith('agregat');
+        expect(aggregationHelper.obtéNotesAgregades).toHaveBeenCalledWith(expect.any(Object), 2);
+        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 7, undefined]);
+    });
+
     test('hauria de generar la capçalera exacta de Notes Flat', () => {
         const worksheet = creaWorkbook().getWorksheet('Notes Flat');
 

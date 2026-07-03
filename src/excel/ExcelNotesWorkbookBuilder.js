@@ -14,13 +14,13 @@ export class ExcelNotesWorkbookBuilder {
     /**
      * Construeix el llibre Excel amb capçaleres, dades i estils per a una sola avaluació.
      * @param {Array<Object>} dadesAlumnes
-     * @param {number} evaluation
+     * @param {number|typeof NotesAggregationHelper.MODE_AGREGAT} evaluation
      * @returns {any}
      */
-    construeixWorkbookNotes(dadesAlumnes, evaluation) {
+    construeixWorkbookNotes(dadesAlumnes, evaluation, maxAvaluacions = 0) {
         const workbook = new this.excelJS.Workbook();
-        this.afegeixFullAvaluacio(workbook, dadesAlumnes, evaluation, 'Notes');
-        this.afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation);
+        this.afegeixFullAvaluacio(workbook, dadesAlumnes, evaluation, 'Notes', maxAvaluacions);
+        this.afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation, maxAvaluacions);
         return workbook;
     }
 
@@ -37,8 +37,8 @@ export class ExcelNotesWorkbookBuilder {
             this.afegeixFullAvaluacio(workbook, dadesAlumnes, i, `Av ${i}`);
         }
 
-        this.afegeixFullAvaluacio(workbook, dadesAlumnes, 'agregat', 'Agregat', maxAvaluacions);
-        this.afegeixFullNotesFlat(workbook, dadesAlumnes, 'agregat', maxAvaluacions);
+        this.afegeixFullAvaluacio(workbook, dadesAlumnes, NotesAggregationHelper.MODE_AGREGAT, 'Agregat', maxAvaluacions);
+        this.afegeixFullNotesFlat(workbook, dadesAlumnes, NotesAggregationHelper.MODE_AGREGAT, maxAvaluacions);
 
         return workbook;
     }
@@ -136,7 +136,7 @@ export class ExcelNotesWorkbookBuilder {
      * Afegeix una pestanya normalitzada amb una fila per nota.
      */
     afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation, maxAvaluacions = 0) {
-        const suffix = evaluation === 'agregat' ? ' (Agregat)' : '';
+        const suffix = this.notesAggregationHelper.ésModeAgregació(evaluation) ? ' (Agregat)' : '';
         const worksheet = workbook.addWorksheet(`Notes Flat${suffix}`);
         worksheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 1 }];
 
@@ -144,7 +144,7 @@ export class ExcelNotesWorkbookBuilder {
         worksheet.addRow(header);
 
         this.obtéAlumnesValids(dadesAlumnes).forEach(alumne => {
-            const notes = evaluation === 'agregat'
+            const notes = this.notesAggregationHelper.ésModeAgregació(evaluation)
                 ? this.obtéNotesAgregades(alumne, maxAvaluacions)
                 : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
 
@@ -305,7 +305,7 @@ export class ExcelNotesWorkbookBuilder {
     /**
      * Prepara la taula de notes mantenint l'estructura original d'exportació.
      * @param {Array<Object>} dadesAlumnes
-     * @param {number|'agregat'} evaluation
+     * @param {number|typeof NotesAggregationHelper.MODE_AGREGAT} evaluation
      * @param {number} maxAvaluacions
      */
     construeixTaulaNotes(dadesAlumnes, evaluation, maxAvaluacions = 0) {
@@ -315,7 +315,7 @@ export class ExcelNotesWorkbookBuilder {
         const moduls = new Map();
 
         alumnesValids.forEach(alumne => {
-            const notes = evaluation === 'agregat'
+            const notes = this.notesAggregationHelper.ésModeAgregació(evaluation)
                 ? this.obtéNotesAgregades(alumne, maxAvaluacions)
                 : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
 
@@ -366,7 +366,7 @@ export class ExcelNotesWorkbookBuilder {
         }
 
         const files = alumnesValids.map(alumne => {
-            const notes = evaluation === 'agregat'
+            const notes = this.notesAggregationHelper.ésModeAgregació(evaluation)
                 ? this.obtéNotesAgregades(alumne, maxAvaluacions)
                 : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
 

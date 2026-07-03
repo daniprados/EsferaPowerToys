@@ -1,3 +1,5 @@
+import { NotesAggregationHelper } from '../dataProviders/NotesAggregationHelper.js';
+
 /**
  * Coordina l'obtenció de dades, la construcció del workbook i la descàrrega XLSX.
  */
@@ -7,18 +9,25 @@ export class ExcelExportManager {
      * @param {import('../dataProviders/NotesDataProvider.js').NotesDataProvider} dataProvider
      * @param {import('./ExcelNotesWorkbookBuilder.js').ExcelNotesWorkbookBuilder} workbookBuilder
      */
-    constructor(logger, dataProvider, workbookBuilder) {
+    constructor(logger, dataProvider, workbookBuilder, notesAggregationHelper = new NotesAggregationHelper()) {
         this.logger = logger;
         this.dataProvider = dataProvider;
         this.workbookBuilder = workbookBuilder;
+        this.notesAggregationHelper = notesAggregationHelper;
     }
 
     /**
      * Inicia i coordina el procés de descàrrega del fitxer Excel.
+     * @param {number|typeof NotesAggregationHelper.MODE_AGREGAT} evaluation
      * @returns {Promise<void>}
      */
     async procésDescàrregaExcel(evaluation = 1) {
         this.logger.log('ExcelExportManager → procésDescàrregaExcel inici');
+
+        if (this.notesAggregationHelper.ésModeAgregació(evaluation)) {
+            await this.procésDescàrregaTotesLesAvaluacions();
+            return;
+        }
 
         try {
             const dadesExportació = await this.dataProvider.obtéDadesExportació();

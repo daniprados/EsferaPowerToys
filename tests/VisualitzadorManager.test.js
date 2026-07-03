@@ -2,7 +2,7 @@ import { jest, describe, test, expect } from '@jest/globals';
 import { VisualitzadorManager } from '../src/visualitzador/VisualitzadorManager.js';
 
 describe('VisualitzadorManager', () => {
-    test('hauria d’obrir el visualitzador agregat quan l’avaluació és totes', async () => {
+    test('hauria d’obrir el visualitzador agregat quan l’avaluació és agregat', async () => {
         const notesAlumnes = [{ idAlumne: '1', nom: 'Alumna', continguts: {} }];
         const dataProvider = {
             obtéDadesExportació: jest.fn().mockResolvedValue({ notesAlumnes }),
@@ -16,7 +16,7 @@ describe('VisualitzadorManager', () => {
         };
         const manager = new VisualitzadorManager({ log: jest.fn(), error: jest.fn() }, dataProvider, modelBuilder, modal);
 
-        await manager.obreVisualitzador('totes');
+        await manager.obreVisualitzador('agregat');
 
         expect(dataProvider.obtéMaxAvaluacions).toHaveBeenCalledTimes(1);
         expect(modelBuilder.construeixModel).toHaveBeenCalledWith(notesAlumnes, 'agregat', 3);

@@ -1,3 +1,5 @@
+import { NotesAggregationHelper } from '../dataProviders/NotesAggregationHelper.js';
+
 /**
  * Classe per a la creació i gestió del panell de descàrrega de notes en Excel.
  */
@@ -8,15 +10,13 @@ export class ExcelUIBuilder {
      * @param {import('../ContainerUIBuilder.js').ContainerUIBuilder} containerBuilder - Constructor base del contenidor.
      * @param {function} onVisualize Callback activat a l'apretar el botó del visualitzador
      * @param {import('../dataProviders/NotesDataProvider.js').NotesDataProvider} dataProvider - Proveïdor de dades de notes.
-     * @param {function} onDownloadAll Callback per descarregar totes les avaluacions
      */
-    constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null, onDownloadAll = null) {
+    constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null) {
         this.logger = logger;
         this.onDownload = onDownload;
         this.containerBuilder = containerBuilder;
         this.onVisualize = onVisualize;
         this.dataProvider = dataProvider;
-        this.onDownloadAll = onDownloadAll;
         this.maxAvaluacions = 4;
     }
 
@@ -52,7 +52,7 @@ export class ExcelUIBuilder {
         select.id = 'powertoys-evaluation-select';
         select.className = 'powertoy-excel-evaluation-select';
         const optionTotes = document.createElement('option');
-        optionTotes.value = 'totes';
+        optionTotes.value = NotesAggregationHelper.MODE_AGREGAT;
         optionTotes.textContent = `Totes les avaluacions (Agregat)`;
         select.appendChild(optionTotes);
         for (let i = 1; i <= this.maxAvaluacions; i++) {
@@ -93,14 +93,8 @@ export class ExcelUIBuilder {
         const selectAvaluacio = container.querySelector('#powertoys-evaluation-select');
         if (btnExcel) {
             btnExcel.addEventListener('click', () => {
-                if (selectAvaluacio && selectAvaluacio.value === 'totes') {
-                    if (typeof this.onDownloadAll === 'function') {
-                        this.onDownloadAll();
-                    }
-                } else {
-                    const evaluation = this.obtéAvaluacioSeleccionada(selectAvaluacio);
-                    this.onDownload(evaluation);
-                }
+                const evaluation = this.obtéAvaluacioSeleccionada(selectAvaluacio);
+                this.onDownload(evaluation);
             });
         }
 
@@ -114,9 +108,7 @@ export class ExcelUIBuilder {
 
         if (btnVisualitzar && this.onVisualize) {
             btnVisualitzar.addEventListener('click', () => {
-                const evaluation = selectAvaluacio?.value === 'totes'
-                    ? 'totes'
-                    : this.obtéAvaluacioSeleccionada(selectAvaluacio);
+                const evaluation = this.obtéAvaluacioSeleccionada(selectAvaluacio);
                 this.onVisualize(evaluation);
             });
         }
@@ -126,11 +118,15 @@ export class ExcelUIBuilder {
     }
 
     /**
-     * Obté una avaluació numèrica segura per a accions que no accepten l'opció "totes".
+     * Obté el mode seleccionat: agregat canònic o avaluació numèrica segura.
      * @param {HTMLSelectElement|null} selectAvaluacio
-     * @returns {number}
+     * @returns {number|typeof NotesAggregationHelper.MODE_AGREGAT}
      */
     obtéAvaluacioSeleccionada(selectAvaluacio) {
+        if (selectAvaluacio?.value === NotesAggregationHelper.MODE_AGREGAT) {
+            return NotesAggregationHelper.MODE_AGREGAT;
+        }
+
         const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
         return Number.isNaN(evaluation) ? 1 : evaluation;
     }
@@ -141,7 +137,7 @@ export class ExcelUIBuilder {
      * @returns {string}
      */
     obtéTextBotóDescarrega(evaluation) {
-        return evaluation === 'totes'
+        return evaluation === NotesAggregationHelper.MODE_AGREGAT
             ? 'Descarregar Excel totes les avaluacions (agregat)'
             : 'Descarregar Excel avaluació ' + evaluation;
     }
@@ -152,7 +148,7 @@ export class ExcelUIBuilder {
      * @returns {string}
      */
     obtéTextBotóVisualitzador(evaluation) {
-        return evaluation === 'totes'
+        return evaluation === NotesAggregationHelper.MODE_AGREGAT
             ? 'Visualització agregats'
             : 'Visualització avaluació ' + evaluation;
     }
