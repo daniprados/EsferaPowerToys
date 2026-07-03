@@ -1,12 +1,14 @@
 import { NotaValueHelper } from '../dataProviders/NotaValueHelper.js';
+import { NotesAggregationHelper } from '../dataProviders/NotesAggregationHelper.js';
 
 /**
  * Construeix el llibre Excel de notes a partir de dades normalitzades d'Esfer@.
  */
 export class ExcelNotesWorkbookBuilder {
-    constructor(excelJS = (typeof window !== 'undefined' ? window.ExcelJS : null), notaValueHelper = new NotaValueHelper()) {
+    constructor(excelJS = (typeof window !== 'undefined' ? window.ExcelJS : null), notaValueHelper = new NotaValueHelper(), notesAggregationHelper = new NotesAggregationHelper()) {
         this.excelJS = excelJS;
         this.notaValueHelper = notaValueHelper;
+        this.notesAggregationHelper = notesAggregationHelper;
     }
 
     /**
@@ -431,25 +433,7 @@ export class ExcelNotesWorkbookBuilder {
      * Si un mòdul apareix en més d'una avaluació, es conserva la darrera.
      */
     obtéNotesAgregades(alumne, maxAvaluacions) {
-        const mapNotes = new Map();
-
-        for (let i = 1; i <= maxAvaluacions; i++) {
-            let idAvaluacio = null;
-            if (alumne.avaluacions && Array.isArray(alumne.avaluacions)) {
-                const ava = alumne.avaluacions[i - 1];
-                if (ava) idAvaluacio = ava.id;
-            }
-
-            if (idAvaluacio && alumne.continguts[idAvaluacio]) {
-                const notes = alumne.continguts[idAvaluacio];
-                notes.forEach(nota => {
-                    // Sobreescrivim per conservar l'avaluació més recent
-                    mapNotes.set(nota.codi, nota);
-                });
-            }
-        }
-
-        return Array.from(mapNotes.values());
+        return this.notesAggregationHelper.obtéNotesAgregades(alumne, maxAvaluacions);
     }
 
 

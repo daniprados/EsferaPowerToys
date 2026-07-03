@@ -1,23 +1,26 @@
 import { NotaValueHelper } from '../dataProviders/NotaValueHelper.js';
+import { NotesAggregationHelper } from '../dataProviders/NotesAggregationHelper.js';
 
 /**
  * Construeix el model del visualitzador a partir del model intern de notes.
  */
 export class VisualitzadorModelBuilder {
-    constructor(notaValueHelper = new NotaValueHelper()) {
+    constructor(notaValueHelper = new NotaValueHelper(), notesAggregationHelper = new NotesAggregationHelper()) {
         this.notaValueHelper = notaValueHelper;
+        this.notesAggregationHelper = notesAggregationHelper;
     }
 
     /**
      * Converteix les dades d'alumnes en un model orientat a renderitzar el resum visual.
      * @param {Array<Object>} dadesAlumnes
-     * @param {number} evaluation
+     * @param {number|'agregat'} evaluation
+     * @param {number} maxAvaluacions
      * @returns {{students: Array<Object>}}
      */
-    construeixModel(dadesAlumnes, evaluation = 1) {
+    construeixModel(dadesAlumnes, evaluation = 1, maxAvaluacions = 0) {
         const students = (dadesAlumnes || [])
             .filter(alumne => alumne && alumne.continguts && !alumne.skipped && !alumne.error)
-            .map(alumne => this.construeixAlumne(alumne, evaluation))
+            .map(alumne => this.construeixAlumne(alumne, evaluation, maxAvaluacions))
             .filter(Boolean)
             .sort((a, b) => a.nom.localeCompare(b.nom));
 
@@ -27,8 +30,8 @@ export class VisualitzadorModelBuilder {
     /**
      * Construeix el model d'un alumne.
      */
-    construeixAlumne(alumne, evaluation) {
-        const notes = this.obtéNotesAvaluació(alumne, evaluation);
+    construeixAlumne(alumne, evaluation, maxAvaluacions) {
+        const notes = this.obtéNotesAvaluació(alumne, evaluation, maxAvaluacions);
         if (!Array.isArray(notes)) return null;
 
         const subjects = this.construeixAssignatures(notes);
@@ -44,7 +47,11 @@ export class VisualitzadorModelBuilder {
     /**
      * Obté el bloc de notes corresponent a l'avaluació seleccionada.
      */
-    obtéNotesAvaluació(alumne, evaluation) {
+    obtéNotesAvaluació(alumne, evaluation, maxAvaluacions = 0) {
+        if (evaluation === 'agregat') {
+            return this.notesAggregationHelper.obtéNotesAgregades(alumne, maxAvaluacions);
+        }
+
         let idAvaluacio = null;
         const targetCodi = `FINAL_${evaluation}`;
 

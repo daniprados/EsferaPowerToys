@@ -53,7 +53,7 @@ export class ExcelUIBuilder {
         select.className = 'powertoy-excel-evaluation-select';
         const optionTotes = document.createElement('option');
         optionTotes.value = 'totes';
-        optionTotes.textContent = `Descarregar totes les avaluacions`;
+        optionTotes.textContent = `Totes les avaluacions (Agregat)`;
         select.appendChild(optionTotes);
         for (let i = 1; i <= this.maxAvaluacions; i++) {
             const option = document.createElement('option');
@@ -73,7 +73,7 @@ export class ExcelUIBuilder {
         const visualizeButton = document.createElement('button');
         visualizeButton.id = 'btn-visualitzar-dades';
         visualizeButton.className = 'powertoy-excel-button powertoy-excel-visualize-button';
-        visualizeButton.textContent = 'Visualitzar dades (preview)';
+        visualizeButton.textContent = this.obtéTextBotóVisualitzador(select.value);
 
         actions.appendChild(downloadButton);
         actions.appendChild(visualizeButton);
@@ -94,23 +94,54 @@ export class ExcelUIBuilder {
         if (btnExcel) {
             btnExcel.addEventListener('click', () => {
                 if (selectAvaluacio && selectAvaluacio.value === 'totes') {
-                    this.onDownloadAll();
+                    if (typeof this.onDownloadAll === 'function') {
+                        this.onDownloadAll();
+                    }
                 } else {
-                    const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
+                    const evaluation = this.obtéAvaluacioSeleccionada(selectAvaluacio);
                     this.onDownload(evaluation);
                 }
             });
         }
 
         const btnVisualitzar = container.querySelector('#btn-visualitzar-dades');
+        if (selectAvaluacio && btnVisualitzar) {
+            selectAvaluacio.addEventListener('change', () => {
+                btnVisualitzar.textContent = this.obtéTextBotóVisualitzador(selectAvaluacio.value);
+            });
+        }
+
         if (btnVisualitzar && this.onVisualize) {
             btnVisualitzar.addEventListener('click', () => {
-                const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
+                const evaluation = selectAvaluacio?.value === 'totes'
+                    ? 'totes'
+                    : this.obtéAvaluacioSeleccionada(selectAvaluacio);
                 this.onVisualize(evaluation);
             });
         }
 
         this.logger.log('ExcelUIBuilder → panell creat');
         return container;
+    }
+
+    /**
+     * Obté una avaluació numèrica segura per a accions que no accepten l'opció "totes".
+     * @param {HTMLSelectElement|null} selectAvaluacio
+     * @returns {number}
+     */
+    obtéAvaluacioSeleccionada(selectAvaluacio) {
+        const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
+        return Number.isNaN(evaluation) ? 1 : evaluation;
+    }
+
+    /**
+     * Obté el text del botó del visualitzador segons l'avaluació seleccionada.
+     * @param {string} evaluation
+     * @returns {string}
+     */
+    obtéTextBotóVisualitzador(evaluation) {
+        return evaluation === 'totes'
+            ? 'Visualització agregats'
+            : 'Visualització avaluació ' + evaluation;
     }
 }

@@ -19,7 +19,13 @@ export class VisualitzadorManager {
             const dadesExportació = await this.dataProvider.obtéDadesExportació();
             if (!dadesExportació) return;
 
-            const model = this.modelBuilder.construeixModel(dadesExportació.notesAlumnes, evaluation);
+            const isAgregat = evaluation === 'totes' || evaluation === 'agregat';
+            const maxAvaluacions = isAgregat ? await this.dataProvider.obtéMaxAvaluacions() : 0;
+            const model = this.modelBuilder.construeixModel(
+                dadesExportació.notesAlumnes,
+                isAgregat ? 'agregat' : evaluation,
+                maxAvaluacions,
+            );
             this.modal.open(model.students);
         } catch (error) {
             this.logger.error('Error crític a VisualitzadorManager:', error);

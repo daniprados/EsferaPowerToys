@@ -36,11 +36,17 @@ describe('ExcelExportManager', () => {
 
         dataProvider = {
             obtéDadesExportació: jest.fn(),
+            obtéMaxAvaluacions: jest.fn(),
         };
         workbookBuilder = {
             construeixWorkbookNotes: jest.fn(() => ({
                 xlsx: {
                     writeBuffer: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+                },
+            })),
+            construeixWorkbookTotesLesAvaluacions: jest.fn(() => ({
+                xlsx: {
+                    writeBuffer: jest.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
                 },
             })),
         };
@@ -79,5 +85,18 @@ describe('ExcelExportManager', () => {
         expect(dataProvider.obtéDadesExportació).toHaveBeenCalledTimes(1);
         expect(workbookBuilder.construeixWorkbookNotes).toHaveBeenCalledWith(notesAlumnes, 2);
         expect(clickedDownload).toMatch(/^Esfera_Notes_av_2_\d{4}-\d{2}-\d{2}_Grup Test\.xlsx$/);
+    });
+
+    test('hauria de coordinar proveïdor, constructor i descàrrega per a totes les avaluacions', async () => {
+        const notesAlumnes = [{ idAlumne: '1', nom: 'Alumna', continguts: {} }];
+        dataProvider.obtéDadesExportació.mockResolvedValue({ notesAlumnes, nomGrup: 'Grup Test' });
+        dataProvider.obtéMaxAvaluacions.mockResolvedValue(3);
+
+        await manager.procésDescàrregaTotesLesAvaluacions();
+
+        expect(dataProvider.obtéDadesExportació).toHaveBeenCalledTimes(1);
+        expect(dataProvider.obtéMaxAvaluacions).toHaveBeenCalledTimes(1);
+        expect(workbookBuilder.construeixWorkbookTotesLesAvaluacions).toHaveBeenCalledWith(notesAlumnes, 3);
+        expect(clickedDownload).toMatch(/^Esfera_Notes_Totes_Av_\d{4}-\d{2}-\d{2}_Grup Test\.xlsx$/);
     });
 });
