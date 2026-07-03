@@ -8,13 +8,15 @@ export class ExcelUIBuilder {
      * @param {import('../ContainerUIBuilder.js').ContainerUIBuilder} containerBuilder - Constructor base del contenidor.
      * @param {function} onVisualize Callback activat a l'apretar el botó del visualitzador
      * @param {import('../dataProviders/NotesDataProvider.js').NotesDataProvider} dataProvider - Proveïdor de dades de notes.
+     * @param {function} onDownloadAll Callback per descarregar totes les avaluacions
      */
-    constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null) {
+    constructor(logger, onDownload, containerBuilder, onVisualize = null, dataProvider = null, onDownloadAll = null) {
         this.logger = logger;
         this.onDownload = onDownload;
         this.containerBuilder = containerBuilder;
         this.onVisualize = onVisualize;
         this.dataProvider = dataProvider;
+        this.onDownloadAll = onDownloadAll;
         this.maxAvaluacions = 4;
     }
 
@@ -49,6 +51,10 @@ export class ExcelUIBuilder {
         const select = document.createElement('select');
         select.id = 'powertoys-evaluation-select';
         select.className = 'powertoy-excel-evaluation-select';
+        const optionTotes = document.createElement('option');
+        optionTotes.value = 'totes';
+        optionTotes.textContent = `Descarregar totes les avaluacions`;
+        select.appendChild(optionTotes);
         for (let i = 1; i <= this.maxAvaluacions; i++) {
             const option = document.createElement('option');
             option.value = `${i}`;
@@ -71,6 +77,8 @@ export class ExcelUIBuilder {
 
         actions.appendChild(downloadButton);
         actions.appendChild(visualizeButton);
+
+
         panelContent.appendChild(title);
         panelContent.appendChild(document.createElement('br'));
         panelContent.appendChild(helpText);
@@ -85,8 +93,12 @@ export class ExcelUIBuilder {
         const selectAvaluacio = container.querySelector('#powertoys-evaluation-select');
         if (btnExcel) {
             btnExcel.addEventListener('click', () => {
-                const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
-                this.onDownload(evaluation);
+                if (selectAvaluacio && selectAvaluacio.value === 'totes') {
+                    this.onDownloadAll();
+                } else {
+                    const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
+                    this.onDownload(evaluation);
+                }
             });
         }
 

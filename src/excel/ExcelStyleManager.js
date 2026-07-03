@@ -56,6 +56,10 @@ export class ExcelStyleManager {
                 background-color: #22c55e;
             }
 
+            .powertoy-excel-download-all-button {
+                background-color: #02573cff; 
+            }
+
             .powertoy-excel-visualize-button {
                 background-color: #2563eb;
             }
