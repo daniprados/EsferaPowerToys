@@ -112,6 +112,16 @@ describe('VisualitzadorModal', () => {
         expect(document.querySelector('[data-action="close"]').getAttribute('aria-label')).toBe('Tanca el visualitzador');
     });
 
+    test('hauria de renderitzar el context de visualització a la barra superior', () => {
+        modal.open(students, 'Visualitzant: Avaluació 2');
+
+        const badge = document.querySelector('.ptv-context-badge');
+
+        expect(badge).not.toBeNull();
+        expect(badge.textContent).toBe('Visualitzant: Avaluació 2');
+        expect(document.querySelector('.ptv-top-bar').textContent).toContain('Visualitzant: Avaluació 2');
+    });
+
     test('hauria de contenir el focus dins del modal i restaurar-lo en tancar', () => {
         const opener = document.createElement('button');
         opener.textContent = 'Obre visualitzador';

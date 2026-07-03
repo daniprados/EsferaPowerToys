@@ -26,9 +26,18 @@ export class VisualitzadorManager {
                 isAgregat ? 'agregat' : evaluation,
                 maxAvaluacions,
             );
-            this.modal.open(model.students);
+            this.modal.open(model.students, this.obtéTextContextVisualització(evaluation, isAgregat));
         } catch (error) {
             this.logger.error('Error crític a VisualitzadorManager:', error);
         }
+    }
+
+    /**
+     * Obté el text contextual que indica quines dades s'estan visualitzant.
+     */
+    obtéTextContextVisualització(evaluation, isAgregat) {
+        return isAgregat
+            ? 'Visualitzant: Totes les avaluacions (agregat)'
+            : 'Visualitzant: Avaluació ' + evaluation;
     }
 }

@@ -68,7 +68,7 @@ export class ExcelUIBuilder {
         const downloadButton = document.createElement('button');
         downloadButton.id = 'btn-descargar-xlsx';
         downloadButton.className = 'powertoy-excel-button powertoy-excel-download-button';
-        downloadButton.textContent = 'Descarregar Excel';
+        downloadButton.textContent = this.obtéTextBotóDescarrega(select.value);
 
         const visualizeButton = document.createElement('button');
         visualizeButton.id = 'btn-visualitzar-dades';
@@ -105,8 +105,9 @@ export class ExcelUIBuilder {
         }
 
         const btnVisualitzar = container.querySelector('#btn-visualitzar-dades');
-        if (selectAvaluacio && btnVisualitzar) {
+        if (selectAvaluacio && btnVisualitzar && btnExcel) {
             selectAvaluacio.addEventListener('change', () => {
+                btnExcel.textContent = this.obtéTextBotóDescarrega(selectAvaluacio.value);
                 btnVisualitzar.textContent = this.obtéTextBotóVisualitzador(selectAvaluacio.value);
             });
         }
@@ -132,6 +133,17 @@ export class ExcelUIBuilder {
     obtéAvaluacioSeleccionada(selectAvaluacio) {
         const evaluation = selectAvaluacio ? parseInt(selectAvaluacio.value, 10) : 1;
         return Number.isNaN(evaluation) ? 1 : evaluation;
+    }
+
+    /**
+     * Obté el text del botó de descàrrega segons l'avaluació seleccionada.
+     * @param {string} evaluation
+     * @returns {string}
+     */
+    obtéTextBotóDescarrega(evaluation) {
+        return evaluation === 'totes'
+            ? 'Descarregar Excel totes les avaluacions (agregat)'
+            : 'Descarregar Excel avaluació ' + evaluation;
     }
 
     /**
