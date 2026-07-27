@@ -93,7 +93,7 @@ export class PopulationDataProvider {
      * @returns {Promise<Object|Array|null>}
      */
     async fetchJson(url) {
-        const token = sessionStorage.getItem('token');
+        const token = sessionStorage.getItem('TOKEN');
         const headers = { 'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/' };
         if (token) headers.TOKEN = token;
         const resposta = await this.fetcher(url, { credentials: 'same-origin', headers });

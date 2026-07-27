@@ -36,7 +36,7 @@ describe('PopulationDataProvider', () => {
     });
 
     test('fa una cerca separada per a altes i baixes amb el curs indicat', async () => {
-        sessionStorage.setItem('token', 'token-de-prova');
+        sessionStorage.setItem('TOKEN', 'token-de-prova');
         const fetcher = jest.fn()
             .mockResolvedValueOnce({ ok: true, json: async () => [{ id_ensenyament: '1', ensenyament: 'ESO', nivell: 1 }] })
             .mockResolvedValueOnce({ ok: true, json: async () => [] });
