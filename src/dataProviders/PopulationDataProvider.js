@@ -93,7 +93,10 @@ export class PopulationDataProvider {
      * @returns {Promise<Object|Array|null>}
      */
     async fetchJson(url) {
-        const resposta = await this.fetcher(url, { credentials: 'same-origin' });
+        const token = sessionStorage.getItem('token');
+        const headers = { 'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/' };
+        if (token) headers.TOKEN = token;
+        const resposta = await this.fetcher(url, { credentials: 'same-origin', headers });
         if (!resposta.ok) throw new Error(`Resposta HTTP ${resposta.status}`);
         return resposta.json();
     }

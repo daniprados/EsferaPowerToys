@@ -4,14 +4,16 @@ import { PopulationDataProvider } from '../src/dataProviders/PopulationDataProvi
 
 describe('PopulationDataProvider', () => {
     beforeEach(() => {
-        const dom = new JSDOM('<!doctype html><html><body></body></html>');
+        const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://example.test' });
         global.window = dom.window;
         global.document = dom.window.document;
+        global.sessionStorage = dom.window.sessionStorage;
     });
 
     afterEach(() => {
         delete global.window;
         delete global.document;
+        delete global.sessionStorage;
     });
 
     test('calcula els recomptes globals, per estudi i per nivell', () => {
@@ -34,6 +36,7 @@ describe('PopulationDataProvider', () => {
     });
 
     test('fa una cerca separada per a altes i baixes amb el curs indicat', async () => {
+        sessionStorage.setItem('token', 'token-de-prova');
         const fetcher = jest.fn()
             .mockResolvedValueOnce({ ok: true, json: async () => [{ id_ensenyament: '1', ensenyament: 'ESO', nivell: 1 }] })
             .mockResolvedValueOnce({ ok: true, json: async () => [] });
@@ -45,6 +48,10 @@ describe('PopulationDataProvider', () => {
         expect(fetcher.mock.calls[0][0]).toContain('cursEscolar=2026%2F2027');
         expect(fetcher.mock.calls[0][0]).toContain('estatsMatricula=ALTA');
         expect(fetcher.mock.calls[1][0]).toContain('estatsMatricula=BAIXA');
+        expect(fetcher.mock.calls[0][1]).toEqual(expect.objectContaining({
+            credentials: 'same-origin',
+            headers: { 'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/', TOKEN: 'token-de-prova' },
+        }));
         expect(dades.totals.totalCurs).toBe(1);
     });
 
