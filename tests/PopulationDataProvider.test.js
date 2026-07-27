@@ -37,6 +37,11 @@ describe('PopulationDataProvider', () => {
 
     test('fa una cerca separada per a altes i baixes amb el curs indicat', async () => {
         sessionStorage.setItem('TOKEN', '"token-de-prova"');
+        sessionStorage.setItem('centre', JSON.stringify({ id: 54715, value: 'un-altre-centre' }));
+        sessionStorage.setItem('centres', JSON.stringify({
+            dadesRespRols: [{ id: 5 }],
+            usuari: { nom: 'Ada', cognom1: 'Lovelace', cognom2: null },
+        }));
         const fetcher = jest.fn()
             .mockResolvedValueOnce({ ok: true, json: async () => [{ id_ensenyament: '1', ensenyament: 'ESO', nivell: 1 }] })
             .mockResolvedValueOnce({ ok: true, json: async () => [] });
@@ -50,7 +55,13 @@ describe('PopulationDataProvider', () => {
         expect(fetcher.mock.calls[1][0]).toContain('estatsMatricula=BAIXA');
         expect(fetcher.mock.calls[0][1]).toEqual(expect.objectContaining({
             credentials: 'same-origin',
-            headers: { 'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/', TOKEN: 'token-de-prova' },
+            headers: {
+                'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/',
+                TOKEN: 'token-de-prova',
+                USR_CENTRE: '54715',
+                USR_ROL: '5',
+                USR_USERNAME_AWA: 'Ada Lovelace',
+            },
         }));
         expect(dades.totals.totalCurs).toBe(1);
     });

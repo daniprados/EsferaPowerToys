@@ -94,7 +94,10 @@ export class PopulationDataProvider {
      */
     async fetchJson(url) {
         const token = this.normalitzaToken(sessionStorage.getItem('TOKEN'));
-        const headers = { 'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/' };
+        const headers = {
+            'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/',
+            ...this.obtéCapçaleresUsuari(),
+        };
         if (token) headers.TOKEN = token;
         const resposta = await this.fetcher(url, { credentials: 'same-origin', headers });
         if (!resposta.ok) throw new Error(`Resposta HTTP ${resposta.status}`);
@@ -120,5 +123,40 @@ export class PopulationDataProvider {
             }
         }
         return valor.replace(/^(?:\\?["'])+/, '').replace(/(?:\\?["'])+$/, '');
+    }
+
+    /**
+     * Recupera el context de l'usuari que Esfer@ requereix a les peticions.
+     * @returns {Object<string, string>}
+     */
+    obtéCapçaleresUsuari() {
+        const capçaleres = {};
+        const centre = this.llegeixJsonSessio('centre');
+        const centres = this.llegeixJsonSessio('centres');
+        const idCentre = centre?.id ?? centre?.value;
+        const idRol = centres?.dadesRespRols?.[0]?.id;
+        const usuari = centres?.usuari;
+        const nomUsuari = usuari ? [usuari.nom, usuari.cognom1, usuari.cognom2].filter(Boolean).join(' ') : null;
+
+        if (idCentre) capçaleres.USR_CENTRE = String(idCentre);
+        if (idRol) capçaleres.USR_ROL = String(idRol);
+        if (nomUsuari) capçaleres.USR_USERNAME_AWA = nomUsuari;
+        return capçaleres;
+    }
+
+    /**
+     * Llegeix un valor JSON de la sessió sense exposar-ne el contingut als registres.
+     * @param {string} clau
+     * @returns {Object|null}
+     */
+    llegeixJsonSessio(clau) {
+        const valor = sessionStorage.getItem(clau);
+        if (!valor) return null;
+        try {
+            return JSON.parse(valor);
+        } catch (error) {
+            this.logger.warn(`PopulationDataProvider → valor de sessió invàlid: ${clau}`, error);
+            return null;
+        }
     }
 }
