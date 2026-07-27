@@ -108,15 +108,17 @@ export class PopulationDataProvider {
      */
     normalitzaToken(token) {
         if (!token) return null;
-        const valor = token.trim();
-        if (valor.startsWith('"') && valor.endsWith('"')) {
+        let valor = token.trim();
+        for (let intents = 0; intents < 5 && valor.startsWith('"') && valor.endsWith('"'); intents += 1) {
             try {
-                return JSON.parse(valor);
+                const valorDeserialitzat = JSON.parse(valor);
+                if (typeof valorDeserialitzat !== 'string') break;
+                valor = valorDeserialitzat.trim();
             } catch (error) {
                 this.logger.warn('PopulationDataProvider → token de sessió invàlid', error);
-                return null;
+                break;
             }
         }
-        return valor;
+        return valor.replace(/^(?:\\?["'])+/, '').replace(/(?:\\?["'])+$/, '');
     }
 }

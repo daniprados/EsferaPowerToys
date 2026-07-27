@@ -59,6 +59,8 @@ describe('PopulationDataProvider', () => {
         const provider = new PopulationDataProvider({ log: jest.fn(), warn: jest.fn() }, jest.fn());
 
         expect(provider.normalitzaToken('"token-de-prova"')).toBe('token-de-prova');
+        expect(provider.normalitzaToken(JSON.stringify(JSON.stringify('token-de-prova')))).toBe('token-de-prova');
+        expect(provider.normalitzaToken('\\"token-de-prova\\"')).toBe('token-de-prova');
         expect(provider.normalitzaToken('token-de-prova')).toBe('token-de-prova');
     });
 
