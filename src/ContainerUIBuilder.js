@@ -18,9 +18,10 @@ export class ContainerUIBuilder {
      * @param {HTMLElement} contentElement - Element HTML a mostrar dins del contenidor.
      * @param {string} id - ID únic del contenidor (per defecte: 'powertoy-div').
      * @param {string} instruccions - string per a inserir les instruccions.
+     * @param {string|null} toggleStorageKey - Clau opcional per persistir l'estat de desplegament.
      * @returns {HTMLElement} - El contenidor creat.
      */
-    createContainer(contentElement, id = 'powertoy-div', instruccions = null) {
+    createContainer(contentElement, id = 'powertoy-div', instruccions = null, toggleStorageKey = null) {
         this.logger.log(`ContainerUIBuilder → creant contenidor: ${id}`);
         const container = document.createElement('div');
         container.id = id;
@@ -56,9 +57,17 @@ export class ContainerUIBuilder {
             toggleBtn.title = expanded ? 'Minimitza PowerToys' : 'Expandeix PowerToys';
         };
 
+        if (toggleStorageKey && localStorage.getItem(toggleStorageKey) === 'collapsed') {
+            contentWrapper.classList.add('powertoy-content-wrapper--collapsed');
+            actualitzaEstatToggle(false);
+        }
+
         toggleBtn.addEventListener('click', () => {
             const expanded = contentWrapper.classList.toggle('powertoy-content-wrapper--collapsed') === false;
             actualitzaEstatToggle(expanded);
+            if (toggleStorageKey) {
+                localStorage.setItem(toggleStorageKey, expanded ? 'expanded' : 'collapsed');
+            }
         });
         
         container.appendChild(toggleBtn);
