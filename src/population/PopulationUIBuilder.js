@@ -24,10 +24,11 @@ export class PopulationUIBuilder {
         content.appendChild(title);
 
         const controls = document.createElement('div');
+        controls.className = 'powertoys-population-controls';
         const recalcula = this.createButton('Recalcula', 'btn btn-primary btn-sm', onRecalcula);
         const csv = this.createButton('Baixa CSV', 'btn btn-default btn-sm', onDescarregaCsv);
         csv.disabled = !dades;
-        controls.append(recalcula, document.createTextNode(' '), csv);
+        controls.append(recalcula, csv);
         content.appendChild(controls);
 
         if (!dades) {
@@ -46,17 +47,40 @@ export class PopulationUIBuilder {
             content.appendChild(actualitzat);
         }
 
-        return this.containerBuilder.createContainer(content, 'powertoys-population-box', null, 'powertoys_population_collapsed');
+        return this.containerBuilder.createContainer(
+            content,
+            'powertoys-population-box',
+            null,
+            'powertoys_population_collapsed',
+            'powertoys-population-container',
+        );
     }
 
     createSummary(dades) {
-        const summary = document.createElement('p');
-        summary.className = 'powertoys-population-summary';
-        summary.textContent = `Al llarg del curs: ${dades.totals.totalCurs} · Actualment: ${dades.totals.altes} · Baixes: ${dades.totals.baixes}`;
+        const summary = document.createElement('div');
+        summary.className = 'powertoys-population-totals';
+        [
+            ['Al llarg del curs', dades.totals.totalCurs],
+            ['Actualment', dades.totals.altes],
+            ['Baixes', dades.totals.baixes],
+        ].forEach(([label, value]) => {
+            const metric = document.createElement('div');
+            metric.className = 'powertoys-population-metric';
+            const metricLabel = document.createElement('span');
+            metricLabel.className = 'powertoys-population-metric-label';
+            metricLabel.textContent = label;
+            const metricValue = document.createElement('span');
+            metricValue.className = 'powertoys-population-metric-value';
+            metricValue.textContent = String(value);
+            metric.append(metricLabel, metricValue);
+            summary.appendChild(metric);
+        });
         return summary;
     }
 
     createStudyTable(estudis) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'powertoys-population-table-wrapper';
         const table = document.createElement('table');
         table.className = 'table table-striped table-condensed powertoys-population-table';
         const capcalera = table.createTHead().insertRow();
@@ -70,7 +94,8 @@ export class PopulationUIBuilder {
                 const cell = row.insertCell(); cell.textContent = String(valor);
             });
         });
-        return table;
+        wrapper.appendChild(table);
+        return wrapper;
     }
 
     createButton(text, className, action) {

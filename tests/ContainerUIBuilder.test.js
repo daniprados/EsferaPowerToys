@@ -89,4 +89,12 @@ describe('ContainerUIBuilder', () => {
 
     expect(localStorage.getItem('powertoy-test-collapsed')).toBe('expanded');
   });
+
+  test('hauria d’afegir una classe opcional al contenidor', () => {
+    const builder = new ContainerUIBuilder({ log: jest.fn() }, '1.0.0');
+
+    const container = builder.createContainer(document.createElement('div'), 'powertoy-test', null, null, 'contenidor-especial');
+
+    expect(container.classList.contains('contenidor-especial')).toBe(true);
+  });
 });

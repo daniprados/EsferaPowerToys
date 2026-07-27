@@ -19,13 +19,15 @@ export class ContainerUIBuilder {
      * @param {string} id - ID únic del contenidor (per defecte: 'powertoy-div').
      * @param {string} instruccions - string per a inserir les instruccions.
      * @param {string|null} toggleStorageKey - Clau opcional per persistir l'estat de desplegament.
+     * @param {string|null} containerClass - Classe opcional per personalitzar el contenidor.
      * @returns {HTMLElement} - El contenidor creat.
      */
-    createContainer(contentElement, id = 'powertoy-div', instruccions = null, toggleStorageKey = null) {
+    createContainer(contentElement, id = 'powertoy-div', instruccions = null, toggleStorageKey = null, containerClass = null) {
         this.logger.log(`ContainerUIBuilder → creant contenidor: ${id}`);
         const container = document.createElement('div');
         container.id = id;
         container.classList.add('powertoy-container');
+        if (containerClass) container.classList.add(containerClass);
 
         // Botó per comprimir/expandir
         const toggleBtn = document.createElement('button');
