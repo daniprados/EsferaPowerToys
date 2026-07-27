@@ -93,11 +93,30 @@ export class PopulationDataProvider {
      * @returns {Promise<Object|Array|null>}
      */
     async fetchJson(url) {
-        const token = sessionStorage.getItem('TOKEN');
+        const token = this.normalitzaToken(sessionStorage.getItem('TOKEN'));
         const headers = { 'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/' };
         if (token) headers.TOKEN = token;
         const resposta = await this.fetcher(url, { credentials: 'same-origin', headers });
         if (!resposta.ok) throw new Error(`Resposta HTTP ${resposta.status}`);
         return resposta.json();
+    }
+
+    /**
+     * El token de la sessió pot estar serialitzat com una cadena JSON.
+     * @param {string|null} token
+     * @returns {string|null}
+     */
+    normalitzaToken(token) {
+        if (!token) return null;
+        const valor = token.trim();
+        if (valor.startsWith('"') && valor.endsWith('"')) {
+            try {
+                return JSON.parse(valor);
+            } catch (error) {
+                this.logger.warn('PopulationDataProvider → token de sessió invàlid', error);
+                return null;
+            }
+        }
+        return valor;
     }
 }

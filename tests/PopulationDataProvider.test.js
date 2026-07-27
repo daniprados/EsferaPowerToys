@@ -36,7 +36,7 @@ describe('PopulationDataProvider', () => {
     });
 
     test('fa una cerca separada per a altes i baixes amb el curs indicat', async () => {
-        sessionStorage.setItem('TOKEN', 'token-de-prova');
+        sessionStorage.setItem('TOKEN', '"token-de-prova"');
         const fetcher = jest.fn()
             .mockResolvedValueOnce({ ok: true, json: async () => [{ id_ensenyament: '1', ensenyament: 'ESO', nivell: 1 }] })
             .mockResolvedValueOnce({ ok: true, json: async () => [] });
@@ -53,6 +53,13 @@ describe('PopulationDataProvider', () => {
             headers: { 'FUNCIONALITAT-ORIGEN': '/matricula/fitxa/', TOKEN: 'token-de-prova' },
         }));
         expect(dades.totals.totalCurs).toBe(1);
+    });
+
+    test('elimina la serialització JSON del token abans d’enviar-lo', () => {
+        const provider = new PopulationDataProvider({ log: jest.fn(), warn: jest.fn() }, jest.fn());
+
+        expect(provider.normalitzaToken('"token-de-prova"')).toBe('token-de-prova');
+        expect(provider.normalitzaToken('token-de-prova')).toBe('token-de-prova');
     });
 
     test('llegeix el curs actual del cercador abans de consultar l’API', async () => {
