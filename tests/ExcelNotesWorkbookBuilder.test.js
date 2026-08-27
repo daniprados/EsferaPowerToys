@@ -246,6 +246,40 @@ describe('ExcelNotesWorkbookBuilder', () => {
         expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, undefined, 8, undefined, '']);
     });
 
+    test('hauria d’obtenir l’estat de la darrera avaluació final dins del màxim agregat', () => {
+        const worksheet = builder.construeixWorkbookNotes([
+            {
+                idAlumne: '1',
+                nom: 'Alumna',
+                avaluacions: [
+                    { codi: 'FINAL_3', id: 'ava3', estat: 'CF_TITOL' },
+                    { codi: 'ALTRE', id: 'altra', estat: 'ESTAT_NO_FINAL' },
+                    { codi: 'FINAL_1', id: 'ava1', estat: 'CF_REP' },
+                    { codi: 'FINAL_2', id: 'ava2', estat: 'CF_SUPERA' },
+                ],
+                continguts: { ava1: [], ava2: [], ava3: [], altra: [] },
+            },
+        ], 'agregat', 2).getWorksheet('Notes');
+
+        expect(worksheet.getRow(3).values.at(-1)).toBe('CF_SUPERA');
+    });
+
+    test('hauria d’usar l’última entrada original si no hi ha cap avaluació final reconeguda', () => {
+        const worksheet = builder.construeixWorkbookNotes([
+            {
+                idAlumne: '1',
+                nom: 'Alumna',
+                avaluacions: [
+                    { codi: 'INICIAL', id: 'inicial', estat: 'CF_REP' },
+                    { codi: 'EXTRAORDINARIA', id: 'extra', estat: 'CF_TITOL' },
+                ],
+                continguts: { inicial: [], extra: [] },
+            },
+        ], 'agregat', 2).getWorksheet('Notes');
+
+        expect(worksheet.getRow(3).values.at(-1)).toBe('CF_TITOL');
+    });
+
     test('hauria de comptar a segona un mòdul amb estada superat a F2 encara que Esfer@ mantingui la convocatòria 1', () => {
         const dadesAlumnes = [
             {

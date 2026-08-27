@@ -752,20 +752,12 @@ export class ExcelNotesWorkbookBuilder {
     obtéEstatAvaluacio(alumne, evaluation, maxAvaluacions = 0) {
         const avaluacions = Array.isArray(alumne?.avaluacions) ? alumne.avaluacions : [];
         if (this.notesAggregationHelper.ésModeAgregació(evaluation)) {
-            const darreraAvaluacio = [...avaluacions]
-                .sort((a, b) => this.obtéNúmeroAvaluació(a?.codi) - this.obtéNúmeroAvaluació(b?.codi))
-                .at(-1);
+            const finals = this.notesAggregationHelper.obtéAvaluacionsFinals(avaluacions, maxAvaluacions);
+            const darreraAvaluacio = finals.at(-1) ?? avaluacions.at(-1) ?? null;
             return darreraAvaluacio?.estat ?? '';
         }
 
         return this.notesAggregationHelper.obtéAvaluacióFinal(avaluacions, evaluation)?.estat ?? '';
-    }
-
-    /**
-     * Extreu el número d'una avaluació FINAL_n per ordenar-ne l'estat.
-     */
-    obtéNúmeroAvaluació(codi) {
-        return this.notesAggregationHelper.obtéNúmeroAvaluacióFinal(codi) ?? 0;
     }
 
 
