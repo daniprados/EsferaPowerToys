@@ -312,8 +312,9 @@ export class ExcelNotesWorkbookBuilder {
         ];
         worksheet.addRow(header);
 
+        const alumnesValids = this.obtéAlumnesValids(dadesAlumnes);
         const moduls = new Map();
-        this.obtéAlumnesValids(dadesAlumnes).forEach(alumne => {
+        alumnesValids.forEach(alumne => {
             const notes = this.filtraContingutsExportables(
                 this.obtéNotesPerAvaluacio(alumne, evaluation, maxAvaluacions),
             );
@@ -333,7 +334,7 @@ export class ExcelNotesWorkbookBuilder {
                     matriculats: 0,
                 };
 
-                this.obtéAlumnesValids(dadesAlumnes).forEach(alumne => {
+                alumnesValids.forEach(alumne => {
                     const notes = this.filtraContingutsExportables(
                         this.obtéNotesPerAvaluacio(alumne, evaluation, maxAvaluacions),
                     );

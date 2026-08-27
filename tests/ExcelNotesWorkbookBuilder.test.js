@@ -191,6 +191,15 @@ describe('ExcelNotesWorkbookBuilder', () => {
         expect(worksheet.getCell('E2').numFmt).toBe('0.0%');
     });
 
+    test('hauria de calcular els alumnes vàlids una sola vegada al resum de mòduls', () => {
+        const workbook = new ExcelJS.Workbook();
+        const obtéAlumnesValids = jest.spyOn(builder, 'obtéAlumnesValids');
+
+        builder.afegeixFullResumModuls(workbook, creaDadesAlumnes(), 1);
+
+        expect(obtéAlumnesValids).toHaveBeenCalledTimes(1);
+    });
+
     test('no hauria d’aprovar un mòdul sense nota final si no conté cap estada en empresa', () => {
         const worksheet = creaWorkbook([
             {
