@@ -1,5 +1,5 @@
 /**
- * Activa i actualitza els indicadors de població a la fitxa de l'alumne/a.
+ * Activa i actualitza els indicadors de població a la pàgina cerca de fitxes d'alumnes.
  */
 export class PopulationFeatureManager {
     /**
