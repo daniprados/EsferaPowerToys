@@ -72,6 +72,76 @@ export class ContainerStyleManager {
             .powertoy-scroll-highlight.powertoy-scroll-highlight--active {
                 background-color: #ffffcc !important;
             }
+
+            .powertoys-population-container {
+                max-height: none;
+                overflow: visible;
+                padding: 30px 16px 12px;
+            }
+
+            .powertoys-population-controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 14px;
+            }
+
+            .powertoys-population-totals {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(130px, 1fr));
+                gap: 10px;
+                margin-bottom: 16px;
+            }
+
+            .powertoys-population-metric {
+                border-left: 4px solid #337ab7;
+                background: #fff;
+                padding: 9px 12px;
+            }
+
+            .powertoys-population-metric-label {
+                display: block;
+                color: #555;
+                font-size: 0.85em;
+            }
+
+            .powertoys-population-metric-value {
+                display: block;
+                font-size: 1.65em;
+                font-weight: bold;
+                line-height: 1.1;
+            }
+
+            .powertoys-population-table-wrapper {
+                overflow-x: auto;
+            }
+
+            .powertoys-population-table {
+                background: #fff;
+                margin-bottom: 8px;
+            }
+
+            .powertoys-population-table th:not(:first-child),
+            .powertoys-population-table td:not(:first-child) {
+                text-align: center;
+                white-space: nowrap;
+            }
+
+            .powertoys-population-table td:first-child {
+                font-weight: 600;
+            }
+
+            .powertoys-population-status {
+                color: #666;
+                font-size: 0.9em;
+                margin-bottom: 0;
+            }
+
+            @media (max-width: 600px) {
+                .powertoys-population-totals {
+                    grid-template-columns: 1fr;
+                }
+            }
         `;
 
         document.head.appendChild(style);
