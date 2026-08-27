@@ -1,6 +1,7 @@
 {
   "name": "esferapowertoys",
   "version": "1.15.10",
+  "version": "1.15.9",
   "description": "Millores personalitzades per a la plataforma Esfer@ d'avaluació del Departament d'Educació de la Generalitat de Catalunya.",
   "main": "esbuild.config.js",
   "directories": {

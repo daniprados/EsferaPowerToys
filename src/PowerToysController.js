@@ -19,6 +19,9 @@ import { VisualitzadorModelBuilder } from './visualitzador/VisualitzadorModelBui
 import { VisualitzadorRenderer } from './visualitzador/VisualitzadorRenderer.js';
 import { VisualitzadorPdfExporter } from './visualitzador/VisualitzadorPdfExporter.js';
 import { VisualitzadorModal } from './visualitzador/VisualitzadorModal.js';
+import { PopulationDataProvider } from './dataProviders/PopulationDataProvider.js';
+import { PopulationUIBuilder } from './population/PopulationUIBuilder.js';
+import { PopulationFeatureManager } from './population/PopulationFeatureManager.js';
 /**
  * Classe principal que coordina les funcionalitats d'Esfer@ PowerToys.
  */
@@ -110,6 +113,14 @@ export class PowerToysController {
             this.containerBuilder,
         );
 
+        /** @type {PopulationFeatureManager} */
+        this.populationFeatureManager = new PopulationFeatureManager(
+            this.logger,
+            new PopulationDataProvider(this.logger),
+            new PopulationUIBuilder(this.logger, this.containerBuilder),
+            this.containerBuilder,
+        );
+
         const mainContainer = document.querySelector('#mainView') || document.body;
         this.observer = new MutationObserver(() => this.reinicialitza());
         this.observer.observe(mainContainer, { childList: true, subtree: true });
@@ -133,6 +144,7 @@ export class PowerToysController {
 
         this.materiaStyleManager.aplicaEstils();
         this.excelFeatureManager.tryActivate();
+        this.populationFeatureManager.tryActivate();
         this.materiaFeatureManager.tryActivate();
     }
 }

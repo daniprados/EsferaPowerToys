@@ -4,14 +4,16 @@ import { ContainerUIBuilder } from '../src/ContainerUIBuilder.js';
 
 describe('ContainerUIBuilder', () => {
   beforeEach(() => {
-    const dom = new JSDOM('<!doctype html><html><body></body></html>');
+    const dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://example.test' });
     global.window = dom.window;
     global.document = dom.window.document;
+    global.localStorage = dom.window.localStorage;
   });
 
   afterEach(() => {
     delete global.window;
     delete global.document;
+    delete global.localStorage;
   });
 
   test('hauria de mantenir el nom accessible i l’estat expandit del botó', () => {
@@ -71,5 +73,28 @@ describe('ContainerUIBuilder', () => {
     expect(link.target).toBe('_blank');
     expect(link.rel).toBe('noopener noreferrer');
     expect(link.classList.contains('powertoy-version-link')).toBe(true);
+  });
+
+  test('hauria de restaurar i desar l’estat del contenidor quan rep una clau', () => {
+    localStorage.setItem('powertoy-test-collapsed', 'collapsed');
+    const builder = new ContainerUIBuilder({ log: jest.fn() }, '1.0.0');
+    const container = builder.createContainer(document.createElement('div'), 'powertoy-test', null, 'powertoy-test-collapsed');
+    const toggle = container.querySelector('#powertoy-test-toggle-btn');
+    const wrapper = container.querySelector('.powertoy-content-wrapper');
+
+    expect(wrapper.classList.contains('powertoy-content-wrapper--collapsed')).toBe(true);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+
+    toggle.click();
+
+    expect(localStorage.getItem('powertoy-test-collapsed')).toBe('expanded');
+  });
+
+  test('hauria d’afegir una classe opcional al contenidor', () => {
+    const builder = new ContainerUIBuilder({ log: jest.fn() }, '1.0.0');
+
+    const container = builder.createContainer(document.createElement('div'), 'powertoy-test', null, null, 'contenidor-especial');
+
+    expect(container.classList.contains('contenidor-especial')).toBe(true);
   });
 });

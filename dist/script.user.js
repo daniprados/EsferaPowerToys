@@ -6,6 +6,7 @@
 // @author       ctrl-alt-d
 // @license      MIT
 // @match        https://bfgh.aplicacions.ensenyament.gencat.cat/bfgh/avaluacio/*
+// @match        https://bfgh.aplicacions.ensenyament.gencat.cat/bfgh/matricula/*
 // @require      https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js
 // @require      https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js
 // @require      https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js
