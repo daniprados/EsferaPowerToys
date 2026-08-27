@@ -35,8 +35,8 @@ describe('NotesMapper', () => {
             nom: 'Cognom, Nom',
             grup: '1A',
             avaluacions: [
-                { id: 'ava1', codi: 'FINAL_1' },
-                { id: 'ava2', codi: 'FINAL_2' },
+                { id: 'ava1', codi: 'FINAL_1', estat: '' },
+                { id: 'ava2', codi: 'FINAL_2', estat: '' },
             ],
             continguts: {
                 ava1: [
@@ -45,6 +45,14 @@ describe('NotesMapper', () => {
                 ],
             },
         });
+    });
+
+    test('hauria de conservar l’estat de l’avaluació', () => {
+        expect(mapper.normalitzaAvaluacions([
+            { id: 'ava1', codiExternAva: 'FINAL_2', conseq: 'CF_TITOL' },
+        ])).toEqual([
+            { id: 'ava1', codi: 'FINAL_2', estat: 'CF_TITOL' },
+        ]);
     });
 
     test('hauria de retornar valors buits quan faltin camps opcionals', () => {

@@ -110,6 +110,27 @@ describe('VisualitzadorModelBuilder', () => {
         ]);
     });
 
+    test('hauria de seleccionar F2 pel codi encara que les avaluacions vinguin desordenades', () => {
+        const model = builder.construeixModel([
+            {
+                idAlumne: '1',
+                nom: 'Cognom, Nom',
+                avaluacions: [
+                    { codi: 'F2', id: 'ava2' },
+                    { codi: 'F1', id: 'ava1' },
+                ],
+                continguts: {
+                    ava1: [{ codi: 'M01', nom: 'Primera', jerarquia: '2', qualitativa: 'A5' }],
+                    ava2: [{ codi: 'M02', nom: 'Segona', jerarquia: '2', qualitativa: 'A9' }],
+                },
+            },
+        ], 2);
+
+        expect(model.students[0].subjects).toEqual([
+            { code: 'M02', name: 'Segona', final: 9, ras: [] },
+        ]);
+    });
+
     test('hauria d’usar el helper compartit per resoldre l’agregació canònica', () => {
         const notesAgregades = [{ codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A7' }];
         const aggregationHelper = {

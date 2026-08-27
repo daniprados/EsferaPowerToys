@@ -52,13 +52,8 @@ export class VisualitzadorModelBuilder {
             return this.notesAggregationHelper.obtéNotesAgregades(alumne, maxAvaluacions);
         }
 
-        let idAvaluacio = null;
-        const targetCodi = `FINAL_${evaluation}`;
-
-        if (Array.isArray(alumne.avaluacions)) {
-            const avaluacio = alumne.avaluacions.find(a => a.codi === targetCodi);
-            if (avaluacio) idAvaluacio = avaluacio.id;
-        }
+        const avaluacio = this.notesAggregationHelper.obtéAvaluacióFinal(alumne?.avaluacions, evaluation);
+        const idAvaluacio = avaluacio?.id;
 
         if (idAvaluacio && alumne.continguts[idAvaluacio]) {
             return alumne.continguts[idAvaluacio];
