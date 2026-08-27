@@ -21,6 +21,8 @@ export class ExcelNotesWorkbookBuilder {
         const workbook = new this.excelJS.Workbook();
         this.afegeixFullAvaluacio(workbook, dadesAlumnes, evaluation, 'Notes', maxAvaluacions);
         this.afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation, maxAvaluacions);
+        this.afegeixFullResumModuls(workbook, dadesAlumnes, evaluation, maxAvaluacions);
+        this.afegeixFullResumAvaluacio(workbook, dadesAlumnes, maxAvaluacions);
         return workbook;
     }
 
@@ -39,6 +41,8 @@ export class ExcelNotesWorkbookBuilder {
 
         this.afegeixFullAvaluacio(workbook, dadesAlumnes, NotesAggregationHelper.MODE_AGREGAT, 'Agregat', maxAvaluacions);
         this.afegeixFullNotesFlat(workbook, dadesAlumnes, NotesAggregationHelper.MODE_AGREGAT, maxAvaluacions);
+        this.afegeixFullResumModuls(workbook, dadesAlumnes, NotesAggregationHelper.MODE_AGREGAT, maxAvaluacions);
+        this.afegeixFullResumAvaluacio(workbook, dadesAlumnes, maxAvaluacions);
 
         return workbook;
     }
@@ -133,6 +137,109 @@ export class ExcelNotesWorkbookBuilder {
     }
 
     /**
+     * Afegeix el resum d'estats de la darrera avaluació disponible de cada alumne.
+     */
+    afegeixFullResumAvaluacio(workbook, dadesAlumnes, maxAvaluacions = 0) {
+        const worksheet = workbook.addWorksheet('Resum avaluació');
+        const alumnes = this.obtéAlumnesValids(dadesAlumnes);
+        const detalls = alumnes.map(alumne => {
+            const avaluacio = this.obtéDarreraAvaluacioAmbEstat(alumne?.avaluacions, maxAvaluacions);
+            const codiEstat = String(avaluacio?.estat ?? '').trim();
+            return {
+                idAlumne: alumne.idAlumne ?? alumne.idMatricula ?? '',
+                nom: alumne.nom ?? '',
+                avaluacio: avaluacio?.codi ?? '',
+                codiEstat,
+                estat: this.obtéNomEstatAvaluacio(codiEstat),
+            };
+        });
+        const comptadors = new Map();
+
+        detalls.forEach(detall => {
+            const clau = detall.codiEstat || '';
+            comptadors.set(clau, (comptadors.get(clau) ?? 0) + 1);
+        });
+
+        worksheet.addRow([
+            'Estat', 'Codi', 'Alumnes', 'Percentatge', '',
+            'idAlumne', 'Alumne', 'Darrera avaluació', 'Codi estat', 'Estat',
+        ]);
+
+        const codisOrdenats = Array.from(comptadors.keys()).sort((codiA, codiB) => {
+            const ordre = ['CF_TITOL', 'CF_SUPERA', 'CF_REP', 'CF_SEG_AVAL', ''];
+            const posicioA = ordre.indexOf(codiA);
+            const posicioB = ordre.indexOf(codiB);
+            if (posicioA !== -1 || posicioB !== -1) {
+                return (posicioA === -1 ? ordre.length : posicioA) - (posicioB === -1 ? ordre.length : posicioB);
+            }
+            return codiA.localeCompare(codiB);
+        });
+        const totalAlumnes = detalls.length;
+        const totalFiles = Math.max(codisOrdenats.length, detalls.length);
+
+        for (let index = 0; index < totalFiles; index++) {
+            const codiEstat = codisOrdenats[index];
+            const detall = detalls[index];
+            const recompte = codiEstat === undefined ? undefined : comptadors.get(codiEstat);
+            worksheet.addRow([
+                codiEstat === undefined ? undefined : this.obtéNomEstatAvaluacio(codiEstat),
+                codiEstat === undefined ? undefined : codiEstat,
+                recompte,
+                recompte === undefined || totalAlumnes === 0 ? undefined : recompte / totalAlumnes,
+                '',
+                detall?.idAlumne,
+                detall?.nom,
+                detall?.avaluacio,
+                detall?.codiEstat,
+                detall?.estat,
+            ]);
+        }
+
+        worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+        worksheet.autoFilter = { from: { row: 1, column: 6 }, to: { row: Math.max(1, detalls.length + 1), column: 10 } };
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
+        for (let rowNumber = 2; rowNumber <= codisOrdenats.length + 1; rowNumber++) {
+            worksheet.getRow(rowNumber).getCell(4).numFmt = '0.0%';
+        }
+        [28, 16, 12, 14, 3, 16, 32, 20, 18, 32].forEach((width, index) => {
+            worksheet.getColumn(index + 1).width = width;
+        });
+
+        return worksheet;
+    }
+
+    /**
+     * Obté l'avaluació més recent amb un estat informat, encara que sigui la primera.
+     * Si cap avaluació té estat, conserva la darrera disponible per mostrar-la al detall.
+     */
+    obtéDarreraAvaluacioAmbEstat(avaluacions, maxAvaluacions = 0) {
+        const finals = this.notesAggregationHelper.obtéAvaluacionsFinals(
+            Array.isArray(avaluacions) ? avaluacions : [],
+            maxAvaluacions,
+        );
+        return [...finals]
+            .reverse()
+            .find(avaluacio => String(avaluacio?.estat ?? '').trim() !== '')
+            ?? finals.at(-1)
+            ?? null;
+    }
+
+    /**
+     * Tradueix els codis de conseqüència d'Esfer@ a etiquetes llegibles.
+     */
+    obtéNomEstatAvaluacio(codiEstat) {
+        const noms = {
+            CF_SUPERA: 'Accedeix al curs següent',
+            CF_REP: 'Roman al mateix curs',
+            CF_SEG_AVAL: 'Pendent de la següent avaluació',
+            CF_TITOL: 'Obté el títol del Cicle Formatiu',
+        };
+        const codi = String(codiEstat ?? '').trim();
+        return noms[codi] ?? (codi || 'No informat');
+    }
+
+    /**
      * Afegeix una pestanya normalitzada amb una fila per nota.
      */
     afegeixFullNotesFlat(workbook, dadesAlumnes, evaluation, maxAvaluacions = 0) {
@@ -189,6 +296,189 @@ export class ExcelNotesWorkbookBuilder {
         }
 
         this.ajustaAmpladesColumnesFlat(worksheet);
+    }
+
+    /**
+     * Afegeix el resum de resultats per mòdul de l'avaluació exportada.
+     */
+    afegeixFullResumModuls(workbook, dadesAlumnes, evaluation, maxAvaluacions = 0) {
+        const suffix = this.notesAggregationHelper.ésModeAgregació(evaluation) ? ' (Agregat)' : '';
+        const worksheet = workbook.addWorksheet(`Resum mòduls${suffix}`);
+        const header = [
+            'Codi mòdul', 'Mòdul',
+            '1a convocatòria: avaluats', '1a convocatòria: aprovats', '1a convocatòria: percentatge',
+            '2a convocatòria: avaluats', '2a convocatòria: aprovats', '2a convocatòria: percentatge',
+            'Total: matriculats', 'Total: aprovats', 'Total: percentatge',
+        ];
+        worksheet.addRow(header);
+
+        const moduls = new Map();
+        this.obtéAlumnesValids(dadesAlumnes).forEach(alumne => {
+            const notes = this.filtraContingutsExportables(
+                this.obtéNotesPerAvaluacio(alumne, evaluation, maxAvaluacions),
+            );
+            notes.filter(nota => String(nota?.jerarquia) === '2' && nota?.codi).forEach(modul => {
+                if (!moduls.has(modul.codi)) moduls.set(modul.codi, modul.nom ?? '');
+            });
+        });
+
+        Array.from(moduls.entries())
+            .sort(([codiA], [codiB]) => codiA.localeCompare(codiB))
+            .forEach(([codiModul, nomModul]) => {
+                const resum = {
+                    primeraAvaluats: 0,
+                    primeraAprovats: 0,
+                    segonaAvaluats: 0,
+                    segonaAprovats: 0,
+                    matriculats: 0,
+                };
+
+                this.obtéAlumnesValids(dadesAlumnes).forEach(alumne => {
+                    const notes = this.filtraContingutsExportables(
+                        this.obtéNotesPerAvaluacio(alumne, evaluation, maxAvaluacions),
+                    );
+                    const modul = notes.find(nota => nota?.codi === codiModul && String(nota.jerarquia) === '2');
+                    if (!modul) return;
+
+                    resum.matriculats++;
+                    resum.primeraAvaluats++;
+
+                    const ésSegonaConvocatoria = this.ésSegonaConvocatoriaModul(
+                        alumne,
+                        evaluation,
+                        maxAvaluacions,
+                        notes,
+                        codiModul,
+                        modul,
+                    );
+
+                    if (ésSegonaConvocatoria) {
+                        if (!this.ésNoPresentat(modul)) {
+                            resum.segonaAvaluats++;
+                            if (this.ésModulAprovat(notes, codiModul, modul)) resum.segonaAprovats++;
+                        }
+                    } else if (this.ésModulAprovat(notes, codiModul, modul)) {
+                        resum.primeraAprovats++;
+                    }
+                });
+
+                const totalAprovats = resum.primeraAprovats + resum.segonaAprovats;
+                worksheet.addRow([
+                    codiModul,
+                    nomModul,
+                    resum.primeraAvaluats,
+                    resum.primeraAprovats,
+                    this.calculaPercentatge(resum.primeraAprovats, resum.primeraAvaluats),
+                    resum.segonaAvaluats,
+                    resum.segonaAprovats,
+                    this.calculaPercentatge(resum.segonaAprovats, resum.segonaAvaluats),
+                    resum.matriculats,
+                    totalAprovats,
+                    this.calculaPercentatge(totalAprovats, resum.matriculats),
+                ]);
+            });
+
+        const capçalera = worksheet.getRow(1);
+        capçalera.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        capçalera.alignment = { vertical: 'middle', horizontal: 'center' };
+        capçalera.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
+        worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: header.length } };
+        [5, 8, 11].forEach(colNumber => {
+            for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+                worksheet.getRow(rowNumber).getCell(colNumber).numFmt = '0.0%';
+            }
+        });
+        this.ajustaAmpladesColumnesFlat(worksheet);
+        return worksheet;
+    }
+
+    /**
+     * Determina si un mòdul amb estada en empresa està aprovat comprovant
+     * exclusivament que tots els RA ordinaris estiguin superats.
+     */
+    ésAprovatPerEstadaEnEmpresa(notes, codiModul) {
+        const contingutsModul = notes.filter(nota => nota?.codi === codiModul || String(nota?.codi ?? '').startsWith(`${codiModul}_`));
+        const estades = contingutsModul.filter(nota => this.ésEstadaEnEmpresa(nota));
+        const ras = this.obtéRasModul(contingutsModul);
+
+        return estades.length > 0
+            && ras.length > 0
+            && ras.every(nota => this.notaValueHelper.ésResultatSuperat(this.obtéValorNota(nota)));
+    }
+
+    /**
+     * Determina si el mòdul està superat. Qualsevol RA suspès invalida el mòdul,
+     * encara que Esfer@ presenti una nota numèrica al mòdul.
+     */
+    ésModulAprovat(notes, codiModul, modul) {
+        const contingutsModul = notes.filter(nota => nota?.codi === codiModul || String(nota?.codi ?? '').startsWith(`${codiModul}_`));
+        const ras = this.obtéRasModul(contingutsModul);
+
+        if (contingutsModul.some(nota => this.ésEstadaEnEmpresa(nota))) {
+            return this.ésAprovatPerEstadaEnEmpresa(notes, codiModul);
+        }
+
+        if (ras.some(nota => !this.notaValueHelper.ésResultatSuperat(this.obtéValorNota(nota)))) return false;
+        return this.notaValueHelper.ésResultatSuperat(this.obtéValorNota(modul));
+    }
+
+    /**
+     * Determina si el resultat s'ha de comptar a la segona convocatòria.
+     * En els mòduls amb estada, Esfer@ pot mantenir la convocatòria 1 i la nota
+     * del mòdul en PQ encara que els RA ordinaris no quedin superats fins a l'F2.
+     */
+    ésSegonaConvocatoriaModul(alumne, evaluation, maxAvaluacions, notes, codiModul, modul) {
+        const contingutsModul = notes.filter(nota => nota?.codi === codiModul || String(nota?.codi ?? '').startsWith(`${codiModul}_`));
+        const téEstada = contingutsModul.some(nota => this.ésEstadaEnEmpresa(nota));
+        if (!téEstada) return String(modul?.convocatoria) === '2';
+
+        const notesPrimera = this.filtraContingutsExportables(this.obtéNotesAgregades(alumne, 1));
+        const modulPrimera = notesPrimera.find(nota => nota?.codi === codiModul && String(nota.jerarquia) === '2');
+        if (modulPrimera && this.ésModulAprovat(notesPrimera, codiModul, modulPrimera)) return false;
+
+        // Conservem el comportament històric si només hi ha una avaluació
+        // disponible però Esfer@ ja marca explícitament la segona convocatòria.
+        if (String(modul?.convocatoria) === '2') return true;
+
+        const numeroAvaluacio = this.notesAggregationHelper.ésModeAgregació(evaluation)
+            ? Number(maxAvaluacions)
+            : Number(evaluation);
+        if (!Number.isFinite(numeroAvaluacio) || numeroAvaluacio < 2) return false;
+
+        const avaluacioSegona = this.notesAggregationHelper.obtéAvaluacióFinal(alumne?.avaluacions, 2);
+        const notesSegona = this.filtraContingutsExportables(alumne?.continguts?.[avaluacioSegona?.id]);
+
+        return notesSegona.some(nota => nota?.codi === codiModul || String(nota?.codi ?? '').startsWith(`${codiModul}_`));
+    }
+
+    /**
+     * Obté els RA del mòdul excloent el contingut d'estada en empresa.
+     */
+    obtéRasModul(contingutsModul) {
+        return contingutsModul.filter(nota => /RA$/.test(nota?.codi ?? '') && !this.ésEstadaEnEmpresa(nota));
+    }
+
+    /**
+     * Identifica el contingut corresponent a l'estada en empresa.
+     */
+    ésEstadaEnEmpresa(nota) {
+        const codi = String(nota?.codi ?? '');
+        const nom = String(nota?.nom ?? '');
+        return /_\d*EM$/i.test(codi) || /estada.*empresa|empresa.*estada/i.test(nom);
+    }
+
+    /**
+     * Determina si el mòdul figura com a no presentat a la convocatòria.
+     */
+    ésNoPresentat(modul) {
+        return String(this.obtéValorNota(modul)).trim().toUpperCase() === 'NP';
+    }
+
+    /**
+     * Calcula un percentatge evitant divisions per zero.
+     */
+    calculaPercentatge(numerador, denominador) {
+        return denominador > 0 ? numerador / denominador : 0;
     }
 
     /**
@@ -315,9 +605,10 @@ export class ExcelNotesWorkbookBuilder {
         const moduls = new Map();
 
         alumnesValids.forEach(alumne => {
-            const notes = this.notesAggregationHelper.ésModeAgregació(evaluation)
+            const notesSenseFiltrar = this.notesAggregationHelper.ésModeAgregació(evaluation)
                 ? this.obtéNotesAgregades(alumne, maxAvaluacions)
                 : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
+            const notes = this.filtraContingutsExportables(notesSenseFiltrar);
 
             if (!notes || !Array.isArray(notes)) return;
             notes.forEach(mod => {
@@ -365,10 +656,14 @@ export class ExcelNotesWorkbookBuilder {
             spansModuls.push(spanActual);
         }
 
+        header1.push('Estat');
+        header2.push('Estat');
+
         const files = alumnesValids.map(alumne => {
-            const notes = this.notesAggregationHelper.ésModeAgregació(evaluation)
+            const notesSenseFiltrar = this.notesAggregationHelper.ésModeAgregació(evaluation)
                 ? this.obtéNotesAgregades(alumne, maxAvaluacions)
                 : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
+            const notes = this.filtraContingutsExportables(notesSenseFiltrar);
 
             const fila = [alumne.idAlumne ?? '', alumne.nom ?? ''];
             modulsArray.forEach(([codi, info]) => {
@@ -395,6 +690,7 @@ export class ExcelNotesWorkbookBuilder {
                     }
                 }
             });
+            fila.push(this.obtéEstatAvaluacio(alumne, evaluation, maxAvaluacions));
             return fila;
         });
 
@@ -412,13 +708,8 @@ export class ExcelNotesWorkbookBuilder {
      * Obté les notes de l'avaluació seleccionada amb el mateix fallback històric.
      */
     obtéNotesAvaluacioSeleccionada(alumne, evaluation) {
-        let idAvaluacio = null;
-        if (alumne.avaluacions && Array.isArray(alumne.avaluacions)) {
-            const ava = alumne.avaluacions[evaluation - 1];
-            if (ava) {
-                idAvaluacio = ava.id;
-            }
-        }
+        const avaluacio = this.notesAggregationHelper.obtéAvaluacióFinal(alumne?.avaluacions, evaluation);
+        const idAvaluacio = avaluacio?.id;
 
         if (idAvaluacio && alumne.continguts[idAvaluacio]) {
             return alumne.continguts[idAvaluacio];
@@ -434,6 +725,47 @@ export class ExcelNotesWorkbookBuilder {
      */
     obtéNotesAgregades(alumne, maxAvaluacions) {
         return this.notesAggregationHelper.obtéNotesAgregades(alumne, maxAvaluacions);
+    }
+
+    /**
+     * Exclou files de resum global que no corresponen a mòduls ni resultats d'aprenentatge.
+     */
+    filtraContingutsExportables(notes) {
+        const codisExclosos = new Set(['QFINAL', 'QUNIVERSITAT']);
+        return Array.isArray(notes)
+            ? notes.filter(nota => !codisExclosos.has(String(nota?.codi ?? '').trim().toUpperCase()))
+            : [];
+    }
+
+    /**
+     * Resol les notes corresponents al mode d'exportació actual.
+     */
+    obtéNotesPerAvaluacio(alumne, evaluation, maxAvaluacions) {
+        return this.notesAggregationHelper.ésModeAgregació(evaluation)
+            ? this.obtéNotesAgregades(alumne, maxAvaluacions)
+            : this.obtéNotesAvaluacioSeleccionada(alumne, evaluation);
+    }
+
+    /**
+     * Obté l'estat (conseq) de l'avaluació. En l'agregat conserva el de la darrera avaluació disponible.
+     */
+    obtéEstatAvaluacio(alumne, evaluation, maxAvaluacions = 0) {
+        const avaluacions = Array.isArray(alumne?.avaluacions) ? alumne.avaluacions : [];
+        if (this.notesAggregationHelper.ésModeAgregació(evaluation)) {
+            const darreraAvaluacio = [...avaluacions]
+                .sort((a, b) => this.obtéNúmeroAvaluació(a?.codi) - this.obtéNúmeroAvaluació(b?.codi))
+                .at(-1);
+            return darreraAvaluacio?.estat ?? '';
+        }
+
+        return this.notesAggregationHelper.obtéAvaluacióFinal(avaluacions, evaluation)?.estat ?? '';
+    }
+
+    /**
+     * Extreu el número d'una avaluació FINAL_n per ordenar-ne l'estat.
+     */
+    obtéNúmeroAvaluació(codi) {
+        return this.notesAggregationHelper.obtéNúmeroAvaluacióFinal(codi) ?? 0;
     }
 
 

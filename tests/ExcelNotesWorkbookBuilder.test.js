@@ -57,13 +57,165 @@ describe('ExcelNotesWorkbookBuilder', () => {
     test('hauria de crear les pestanyes Notes i Notes Flat', () => {
         const workbook = creaWorkbook();
 
-        expect(workbook.worksheets.map(worksheet => worksheet.name)).toEqual(['Notes', 'Notes Flat']);
+        expect(workbook.worksheets.map(worksheet => worksheet.name)).toEqual(['Notes', 'Notes Flat', 'Resum mòduls', 'Resum avaluació']);
     });
 
     test('hauria de crear les pestanyes de totes les avaluacions en ordre', () => {
         const workbook = builder.construeixWorkbookTotesLesAvaluacions(creaDadesAlumnes(), 2);
 
-        expect(workbook.worksheets.map(worksheet => worksheet.name)).toEqual(['Av 1', 'Av 2', 'Agregat', 'Notes Flat (Agregat)']);
+        expect(workbook.worksheets.map(worksheet => worksheet.name)).toEqual(['Av 1', 'Av 2', 'Agregat', 'Notes Flat (Agregat)', 'Resum mòduls (Agregat)', 'Resum avaluació']);
+    });
+
+    test('hauria de resumir l’estat de la darrera avaluació disponible de cada alumne', () => {
+        const worksheet = creaWorkbook([
+            {
+                idAlumne: '1', nom: 'Promociona',
+                avaluacions: [{ codi: 'F2', id: 'ava2', estat: 'CF_SUPERA' }, { codi: 'F1', id: 'ava1', estat: 'CF_REP' }],
+                continguts: { ava1: [], ava2: [] },
+            },
+            {
+                idAlumne: '2', nom: 'Roman',
+                avaluacions: [{ codi: 'FINAL_1', id: 'ava1', estat: 'CF_REP' }],
+                continguts: { ava1: [] },
+            },
+            {
+                idAlumne: '3', nom: 'Pendent',
+                avaluacions: [{ codi: 'FINAL_2', id: 'ava2', estat: 'CF_SEG_AVAL' }],
+                continguts: { ava2: [] },
+            },
+            {
+                idAlumne: '4', nom: 'Sense estat',
+                avaluacions: [{ codi: 'FINAL_2', id: 'ava2', estat: '' }],
+                continguts: { ava2: [] },
+            },
+            {
+                idAlumne: '5', nom: 'Titula',
+                avaluacions: [
+                    { codi: 'FINAL_2', id: 'ava2', estat: '' },
+                    { codi: 'FINAL_1', id: 'ava1', estat: 'CF_TITOL' },
+                ],
+                continguts: { ava1: [], ava2: [] },
+            },
+        ]).getWorksheet('Resum avaluació');
+
+        expect(worksheet.getRow(1).values.slice(1)).toEqual([
+            'Estat', 'Codi', 'Alumnes', 'Percentatge', '',
+            'idAlumne', 'Alumne', 'Darrera avaluació', 'Codi estat', 'Estat',
+        ]);
+        expect(worksheet.getRow(2).values.slice(1, 5)).toEqual(['Obté el títol del Cicle Formatiu', 'CF_TITOL', 1, 1 / 5]);
+        expect(worksheet.getRow(3).values.slice(1, 5)).toEqual(['Accedeix al curs següent', 'CF_SUPERA', 1, 1 / 5]);
+        expect(worksheet.getRow(4).values.slice(1, 5)).toEqual(['Roman al mateix curs', 'CF_REP', 1, 1 / 5]);
+        expect(worksheet.getRow(5).values.slice(1, 5)).toEqual(['Pendent de la següent avaluació', 'CF_SEG_AVAL', 1, 1 / 5]);
+        expect(worksheet.getRow(6).values.slice(1, 5)).toEqual(['No informat', '', 1, 1 / 5]);
+        expect(worksheet.getRow(2).values.slice(6)).toEqual(['1', 'Promociona', 'F2', 'CF_SUPERA', 'Accedeix al curs següent']);
+        expect(worksheet.getRow(6).values.slice(6)).toEqual(['5', 'Titula', 'FINAL_1', 'CF_TITOL', 'Obté el títol del Cicle Formatiu']);
+        expect(worksheet.getCell('D2').numFmt).toBe('0.0%');
+    });
+
+    test('hauria d’afegir l’estat de l’avaluació al final del full Notes', () => {
+        const worksheet = creaWorkbook([
+            {
+                idAlumne: '1',
+                nom: 'Alumna',
+                avaluacions: [{ codi: 'FINAL_1', id: 'ava1', estat: 'CF_TITOL' }],
+                continguts: { ava1: [{ codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A8' }] },
+            },
+        ]).getWorksheet('Notes');
+
+        expect(worksheet.getCell('F1').value).toBe('Estat');
+        expect(worksheet.getCell('F2').value).toBe('Estat');
+        expect(worksheet.getCell('F3').value).toBe('CF_TITOL');
+    });
+
+    test('hauria de resumir les dues convocatòries i aprovar el mòdul amb estada si tots els altres RA estan superats', () => {
+        const worksheet = creaWorkbook([
+            {
+                idAlumne: '1', nom: 'Alumna 1', avaluacions: [{ codi: 'FINAL_1', id: 'ava1' }],
+                continguts: { ava1: [
+                    { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'PQ', convocatoria: '2' },
+                    { codi: 'M01_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A7' },
+                    { codi: 'M01_02EM', nom: 'Estada en empresa', jerarquia: '3', qualitativa: 'PDT' },
+                    { codi: 'M01_03RA', nom: 'RA 2', jerarquia: '3', qualitativa: 'PDT' },
+                ] },
+            },
+            {
+                idAlumne: '2', nom: 'Alumna 2', avaluacions: [{ codi: 'FINAL_1', id: 'ava1' }],
+                continguts: { ava1: [
+                    { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A6', convocatoria: '2' },
+                    { codi: 'M01_03RA', nom: 'RA 2', jerarquia: '3', qualitativa: 'A6' },
+                ] },
+            },
+            {
+                idAlumne: '3', nom: 'Alumna 3', avaluacions: [{ codi: 'FINAL_1', id: 'ava1' }],
+                continguts: { ava1: [
+                    { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A4' },
+                ] },
+            },
+            {
+                idAlumne: '4', nom: 'Alumna 4', avaluacions: [{ codi: 'FINAL_1', id: 'ava1' }],
+                continguts: { ava1: [
+                    { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A8' },
+                    { codi: 'M01_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'PDT' },
+                    { codi: 'M01_03RA', nom: 'RA 2', jerarquia: '3', qualitativa: 'NA' },
+                    { codi: 'M01_02RA', nom: 'Estada en empresa', jerarquia: '3', qualitativa: 'PQ' },
+                ] },
+            },
+            {
+                idAlumne: '5', nom: 'Alumna 5', avaluacions: [{ codi: 'FINAL_1', id: 'ava1' }],
+                continguts: { ava1: [
+                    { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'NA', convocatoria: '1' },
+                    { codi: 'M01_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A7' },
+                    { codi: 'M01_02EM', nom: 'Formació pràctica', jerarquia: '3', qualitativa: 'PDT' },
+                ] },
+            },
+            {
+                idAlumne: '6', nom: 'Alumna 6', avaluacions: [{ codi: 'FINAL_1', id: 'ava1' }],
+                continguts: { ava1: [
+                    { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'NP', convocatoria: '2' },
+                ] },
+            },
+        ]).getWorksheet('Resum mòduls');
+
+        expect(worksheet.getRow(1).values.slice(1)).toEqual([
+            'Codi mòdul', 'Mòdul',
+            '1a convocatòria: avaluats', '1a convocatòria: aprovats', '1a convocatòria: percentatge',
+            '2a convocatòria: avaluats', '2a convocatòria: aprovats', '2a convocatòria: percentatge',
+            'Total: matriculats', 'Total: aprovats', 'Total: percentatge',
+        ]);
+        expect(worksheet.getRow(2).values.slice(1)).toEqual([
+            'M01', 'Mòdul 1',
+            6, 1, 1 / 6,
+            2, 1, 1 / 2,
+            6, 2, 1 / 3,
+        ]);
+        expect(worksheet.getCell('E2').numFmt).toBe('0.0%');
+    });
+
+    test('no hauria d’aprovar un mòdul sense nota final si no conté cap estada en empresa', () => {
+        const worksheet = creaWorkbook([
+            {
+                idAlumne: '1', nom: 'Amb estada', avaluacions: [{ codi: 'F1', id: 'ava1' }],
+                continguts: { ava1: [
+                    { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: '' },
+                    { codi: 'M01_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A7' },
+                    { codi: 'M01_01EM', nom: 'Pràctiques', jerarquia: '3', qualitativa: '' },
+                ] },
+            },
+            {
+                idAlumne: '2', nom: 'Sense estada', avaluacions: [{ codi: 'F1', id: 'ava1' }],
+                continguts: { ava1: [
+                    { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: '' },
+                    { codi: 'M01_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A7' },
+                ] },
+            },
+        ]).getWorksheet('Resum mòduls');
+
+        expect(worksheet.getRow(2).values.slice(1)).toEqual([
+            'M01', 'Mòdul 1',
+            2, 1, 1 / 2,
+            0, 0, 0,
+            2, 1, 1 / 2,
+        ]);
     });
 
     test('hauria d’agregar mantenint mòduls d’avaluacions anteriors quan falten a les posteriors', () => {
@@ -90,8 +242,89 @@ describe('ExcelNotesWorkbookBuilder', () => {
         ], 2);
         const worksheet = workbook.getWorksheet('Agregat');
 
-        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M01', 'provisional', 'n. convocatoria', 'M02', 'provisional']);
-        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, undefined, 8, undefined]);
+        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M01', 'provisional', 'n. convocatoria', 'M02', 'provisional', 'Estat']);
+        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, undefined, 8, undefined, '']);
+    });
+
+    test('hauria de comptar a segona un mòdul amb estada superat a F2 encara que Esfer@ mantingui la convocatòria 1', () => {
+        const dadesAlumnes = [
+            {
+                idAlumne: '1',
+                nom: 'Alumna',
+                avaluacions: [
+                    { codi: 'FINAL_1', id: 'ava1' },
+                    { codi: 'FINAL_2', id: 'ava2' },
+                ],
+                continguts: {
+                    ava1: [
+                        { codi: '0485_ICC0', nom: 'Programació', jerarquia: '2', qualitativa: 'PQ', convocatoria: '1' },
+                        { codi: '0485_ICC0_01EM', nom: "Estada a l'empresa", jerarquia: '3', qualitativa: 'PDT' },
+                        { codi: '0485_ICC0_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A5' },
+                        { codi: '0485_ICC0_02RA', nom: 'RA 2', jerarquia: '3', qualitativa: 'NA' },
+                        { codi: '0485_ICC0_04RA', nom: 'RA 4', jerarquia: '3', qualitativa: 'NA' },
+                        { codi: '0485_ICC0_07RA', nom: 'RA 7', jerarquia: '3', qualitativa: 'NA' },
+                    ],
+                    ava2: [
+                        { codi: '0485_ICC0', nom: 'Programació', jerarquia: '2', qualitativa: 'PQ', convocatoria: '1' },
+                        { codi: '0485_ICC0_01EM', nom: "Estada a l'empresa", jerarquia: '3', qualitativa: 'PDT' },
+                        { codi: '0485_ICC0_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A5' },
+                        { codi: '0485_ICC0_02RA', nom: 'RA 2', jerarquia: '3', qualitativa: 'A8' },
+                        { codi: '0485_ICC0_04RA', nom: 'RA 4', jerarquia: '3', qualitativa: 'A8' },
+                        { codi: '0485_ICC0_07RA', nom: 'RA 7', jerarquia: '3', qualitativa: 'A8' },
+                    ],
+                },
+            },
+            {
+                idAlumne: '2',
+                nom: 'Alumne encara no aprovat',
+                avaluacions: [
+                    { codi: 'FINAL_1', id: 'ava1' },
+                    { codi: 'FINAL_2', id: 'ava2' },
+                ],
+                continguts: {
+                    ava1: [
+                        { codi: '0485_ICC0', nom: 'Programació', jerarquia: '2', qualitativa: 'PQ', convocatoria: '1' },
+                        { codi: '0485_ICC0_01EM', nom: "Estada a l'empresa", jerarquia: '3', qualitativa: 'PDT' },
+                        { codi: '0485_ICC0_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'NA' },
+                    ],
+                    ava2: [
+                        { codi: '0485_ICC0', nom: 'Programació', jerarquia: '2', qualitativa: 'PQ', convocatoria: '1' },
+                        { codi: '0485_ICC0_01EM', nom: "Estada a l'empresa", jerarquia: '3', qualitativa: 'PDT' },
+                        { codi: '0485_ICC0_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'NA' },
+                    ],
+                },
+            },
+            {
+                idAlumne: '3',
+                nom: 'Alumne aprovat a F1',
+                avaluacions: [
+                    { codi: 'FINAL_1', id: 'ava1' },
+                    { codi: 'FINAL_2', id: 'ava2' },
+                ],
+                continguts: {
+                    ava1: [
+                        { codi: '0485_ICC0', nom: 'Programació', jerarquia: '2', qualitativa: 'PQ', convocatoria: '2' },
+                        { codi: '0485_ICC0_01EM', nom: "Estada a l'empresa", jerarquia: '3', qualitativa: 'PDT' },
+                        { codi: '0485_ICC0_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A5' },
+                    ],
+                    ava2: [
+                        { codi: '0485_ICC0', nom: 'Programació', jerarquia: '2', qualitativa: 'PQ', convocatoria: '2' },
+                        { codi: '0485_ICC0_01EM', nom: "Estada a l'empresa", jerarquia: '3', qualitativa: 'PDT' },
+                        { codi: '0485_ICC0_01RA', nom: 'RA 1', jerarquia: '3', qualitativa: 'A5' },
+                    ],
+                },
+            },
+        ];
+        const workbook = builder.construeixWorkbookTotesLesAvaluacions(dadesAlumnes, 2);
+        const resumEsperat = [
+            '0485_ICC0', 'Programació',
+            3, 1, 1 / 3,
+            2, 1, 1 / 2,
+            3, 2, 2 / 3,
+        ];
+
+        expect(workbook.getWorksheet('Resum mòduls (Agregat)').getRow(2).values.slice(1)).toEqual(resumEsperat);
+        expect(builder.construeixWorkbookNotes(dadesAlumnes, 2).getWorksheet('Resum mòduls').getRow(2).values.slice(1)).toEqual(resumEsperat);
     });
 
     test('hauria d’aplicar l’agregació només amb el mode agregat canònic', () => {
@@ -115,8 +348,8 @@ describe('ExcelNotesWorkbookBuilder', () => {
             },
         ], 'agregat', 2).getWorksheet('Notes');
 
-        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M01', 'provisional', 'n. convocatoria', 'M02', 'provisional']);
-        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, undefined, 9, undefined]);
+        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M01', 'provisional', 'n. convocatoria', 'M02', 'provisional', 'Estat']);
+        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, undefined, 9, undefined, '']);
     });
 
     test('hauria d’usar el helper compartit per resoldre l’agregació canònica', () => {
@@ -124,6 +357,7 @@ describe('ExcelNotesWorkbookBuilder', () => {
         const aggregationHelper = {
             ésModeAgregació: jest.fn(evaluation => evaluation === 'agregat'),
             obtéNotesAgregades: jest.fn(() => notesAgregades),
+            obtéAvaluacionsFinals: jest.fn(() => []),
         };
         builder = new ExcelNotesWorkbookBuilder(ExcelJS, undefined, aggregationHelper);
 
@@ -133,7 +367,7 @@ describe('ExcelNotesWorkbookBuilder', () => {
 
         expect(aggregationHelper.ésModeAgregació).toHaveBeenCalledWith('agregat');
         expect(aggregationHelper.obtéNotesAgregades).toHaveBeenCalledWith(expect.any(Object), 2);
-        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 7, undefined]);
+        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 7, undefined, '']);
     });
 
     test('hauria de generar la capçalera exacta de Notes Flat', () => {
@@ -242,6 +476,7 @@ describe('ExcelNotesWorkbookBuilder', () => {
         const helper = {
             obtéValorContingut: jest.fn(() => 6),
             ésNotaNumericaAprovada: jest.fn(() => true),
+            ésResultatSuperat: jest.fn(() => true),
         };
         builder = new ExcelNotesWorkbookBuilder(ExcelJS, helper);
 
@@ -262,15 +497,61 @@ describe('ExcelNotesWorkbookBuilder', () => {
     test('hauria d’usar les notes de l’avaluació seleccionada', () => {
         const worksheet = creaWorksheet(creaDadesAlumnes(), 2);
 
-        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M05', 'provisional', 'n. convocatoria', 'M06', 'provisional', 'n. convocatoria', 'M07', 'provisional']);
-        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', '1', 9, undefined, undefined, 'PDT', undefined, undefined, 'PDT', 8]);
+        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M05', 'provisional', 'n. convocatoria', 'M06', 'provisional', 'n. convocatoria', 'M07', 'provisional', 'Estat']);
+        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', '1', 9, undefined, undefined, 'PDT', undefined, undefined, 'PDT', 8, '']);
+    });
+
+    test('hauria de seleccionar F2 pel codi encara que les avaluacions vinguin desordenades', () => {
+        const worksheet = creaWorksheet([
+            {
+                idAlumne: '1',
+                nom: 'Alumna',
+                avaluacions: [
+                    { codi: 'F2', id: 'ava2', estat: 'CF_TITOL' },
+                    { codi: 'F1', id: 'ava1', estat: 'CF_SEG_AVAL' },
+                ],
+                continguts: {
+                    ava1: [{ codi: 'M01', nom: 'Primera', jerarquia: '2', qualitativa: 'A5' }],
+                    ava2: [{ codi: 'M02', nom: 'Segona', jerarquia: '2', qualitativa: 'A9' }],
+                },
+            },
+        ], 2);
+
+        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M02', 'provisional', 'Estat']);
+        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 9, undefined, 'CF_TITOL']);
     });
 
     test('hauria de generar les columnes en ordre determinista per codi de contingut', () => {
         const worksheet = creaWorksheet();
 
-        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M01', 'provisional', 'M02', 'n. convocatoria', 'M03', 'provisional', 'n. convocatoria', 'M04', 'provisional']);
-        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, 4, '1', 8, undefined, '2', 'NA', undefined]);
+        expect(worksheet.getRow(2).values.slice(1)).toEqual(['idAlumne', 'nom', 'n. convocatoria', 'M01', 'provisional', 'M02', 'n. convocatoria', 'M03', 'provisional', 'n. convocatoria', 'M04', 'provisional', 'Estat']);
+        expect(worksheet.getRow(3).values.slice(1)).toEqual(['1', 'Alumna', undefined, 6, undefined, 4, '1', 8, undefined, '2', 'NA', undefined, '']);
+    });
+
+    test('hauria d’excloure QFINAL i QUNIVERSITAT de Notes i Resum mòduls però conservar-los a Notes Flat', () => {
+        const workbook = creaWorkbook([
+            {
+                idAlumne: '1',
+                nom: 'Alumna',
+                avaluacions: [{ codi: 'FINAL_1', id: 'ava1' }],
+                continguts: {
+                    ava1: [
+                        { codi: 'M01', nom: 'Mòdul 1', jerarquia: '2', qualitativa: 'A7' },
+                        { codi: 'QFINAL', nom: "Qualificació final de l'ensenyament", jerarquia: '2', quantitativa: '7' },
+                        { codi: 'QUNIVERSITAT', nom: "Qualificació d'accés a la universitat", jerarquia: '2', quantitativa: '8' },
+                    ],
+                },
+            },
+        ]);
+        const codisNotes = workbook.getWorksheet('Notes').getRow(2).values.slice(1);
+        const codisFlat = obtéFiles(workbook.getWorksheet('Notes Flat')).slice(1).map(fila => fila[4]);
+        const codisResum = obtéFiles(workbook.getWorksheet('Resum mòduls')).slice(1).map(fila => fila[0]);
+
+        expect(codisNotes).toContain('M01');
+        expect(codisNotes).not.toContain('QFINAL');
+        expect(codisNotes).not.toContain('QUNIVERSITAT');
+        expect(codisFlat).toEqual(['M01', 'QFINAL', 'QUNIVERSITAT']);
+        expect(codisResum).toEqual(['M01']);
     });
 
     test('hauria de pintar de verd només les notes numèriques iguals o superiors a cinc', () => {
