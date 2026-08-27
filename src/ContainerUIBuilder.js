@@ -17,7 +17,7 @@ export class ContainerUIBuilder {
      * Crea un contenidor HTML estàndard i hi insereix l'element de contingut personalitzat.
      * @param {HTMLElement} contentElement - Element HTML a mostrar dins del contenidor.
      * @param {string} id - ID únic del contenidor (per defecte: 'powertoy-div').
-     * @param {string} instruccions - string per a inserir les instruccions.
+     * @param {string|null} instruccions - string per a inserir les instruccions.
      * @param {string|null} toggleStorageKey - Clau opcional per persistir l'estat de desplegament.
      * @param {string|null} containerClass - Classe opcional per personalitzar el contenidor.
      * @returns {HTMLElement} - El contenidor creat.
