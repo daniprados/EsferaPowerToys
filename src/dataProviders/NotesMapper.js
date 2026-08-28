@@ -7,7 +7,7 @@
  *   idMatricula,
  *   nom,
  *   grup,
- *   avaluacions: [{ id, codi }],
+ *   avaluacions: [{ id, codi, estat }],
  *   continguts: {
  *     [idAvaluacio]: [{ codi, nom, jerarquia, qualitativa, quantitativa }]
  *   }
@@ -45,6 +45,7 @@ export class NotesMapper {
             .map(avaluacio => ({
                 id: avaluacio.id ?? '',
                 codi: avaluacio.codiExternAva ?? avaluacio.codi ?? '',
+                estat: avaluacio.conseq ?? '',
             }));
     }
 

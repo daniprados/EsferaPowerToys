@@ -60,6 +60,24 @@ describe('NotesAggregationHelper', () => {
         expect(notes.find(nota => nota.codi === 'M01')).toMatchObject({ nom: 'Mòdul 1 nou', qualitativa: 'A9' });
     });
 
+    test('hauria de resoldre també els codis abreujats F1 i F2 sense dependre de la posició', () => {
+        const alumne = {
+            avaluacions: [
+                { codi: 'F2', id: 'ava2' },
+                { codi: 'F1', id: 'ava1' },
+            ],
+            continguts: {
+                ava1: [{ codi: 'M01', nom: 'Mòdul antic', jerarquia: '2', qualitativa: 'A5' }],
+                ava2: [{ codi: 'M01', nom: 'Mòdul nou', jerarquia: '2', qualitativa: 'A8' }],
+            },
+        };
+
+        expect(helper.obtéAvaluacióFinal(alumne.avaluacions, 1)?.id).toBe('ava1');
+        expect(helper.obtéAvaluacióFinal(alumne.avaluacions, 2)?.id).toBe('ava2');
+        expect(helper.obtéDarreraAvaluacióFinal(alumne.avaluacions)?.id).toBe('ava2');
+        expect(helper.obtéNotesAgregades(alumne, 2)[0]).toMatchObject({ nom: 'Mòdul nou', qualitativa: 'A8' });
+    });
+
     test('hauria d’usar els codis FINAL_n en ordre numèric si maxAvaluacions no és vàlid', () => {
         const alumne = {
             avaluacions: [
