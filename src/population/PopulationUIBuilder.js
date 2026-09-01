@@ -39,7 +39,6 @@ export class PopulationUIBuilder {
         } else {
             content.appendChild(this.createSummary(dades));
             content.appendChild(this.createStudyTable(dades.estudis));
-            content.appendChild(this.createErroneousEnrollmentsList(dades.altesErronies ?? []));
             const data = new Date(dades.calculatedAt);
             const dies = Math.floor((Date.now() - data.getTime()) / 86400000);
             const actualitzat = document.createElement('p');
@@ -64,6 +63,7 @@ export class PopulationUIBuilder {
             ['Al llarg del curs', dades.totals.totalCurs],
             ['Actualment', dades.totals.altes],
             ['Baixes', dades.totals.baixes],
+            ['Altes errònies sense grup', dades.altesErronies ?? 0],
         ].forEach(([label, value]) => {
             const metric = document.createElement('div');
             metric.className = 'powertoys-population-metric';
@@ -97,46 +97,6 @@ export class PopulationUIBuilder {
         });
         wrapper.appendChild(table);
         return wrapper;
-    }
-
-    /**
-     * Mostra les baixes que no van arribar a tenir grup i que no computen als indicadors.
-     * @param {Array<{nom: string, estudi: string, nivell: string|number}>} alumnes
-     * @returns {HTMLElement}
-     */
-    createErroneousEnrollmentsList(alumnes) {
-        const section = document.createElement('section');
-        section.className = 'powertoys-population-errors';
-        const title = document.createElement('h5');
-        title.textContent = `Altes errònies sense grup (${alumnes.length})`;
-        section.appendChild(title);
-
-        if (alumnes.length === 0) {
-            const message = document.createElement('p');
-            message.className = 'powertoys-population-status';
-            message.textContent = 'No hi ha alumnes donats de baixa sense haver tingut grup.';
-            section.appendChild(message);
-            return section;
-        }
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'powertoys-population-table-wrapper';
-        const table = document.createElement('table');
-        table.className = 'table table-striped table-condensed powertoys-population-table powertoys-population-errors-table';
-        const header = table.createTHead().insertRow();
-        ['Alumne', 'Estudi', 'Nivell'].forEach((text) => {
-            const th = document.createElement('th'); th.textContent = text; header.appendChild(th);
-        });
-        const body = table.createTBody();
-        alumnes.forEach((alumne) => {
-            const row = body.insertRow();
-            [alumne.nom, alumne.estudi, alumne.nivell].forEach((value) => {
-                const cell = row.insertCell(); cell.textContent = String(value);
-            });
-        });
-        wrapper.appendChild(table);
-        section.appendChild(wrapper);
-        return section;
     }
 
     createButton(text, className, action) {

@@ -1,5 +1,5 @@
 /**
- * Obté el recompte d'alumnat de la pantalla de fitxa.
+ * Obté el recompte d'alumnat de la pantalla de fitxa, sense desar dades personals.
  */
 export class PopulationDataProvider {
     /**
@@ -92,23 +92,8 @@ export class PopulationDataProvider {
                 totalCurs: altes.length + baixesComputables.length,
             },
             estudis: perEstudi,
-            altesErronies: baixesSenseGrup.map((alumne) => ({
-                nom: this.formataNomAlumne(alumne),
-                estudi: alumne.ensenyament || 'Estudi sense especificar',
-                nivell: alumne.nivell ?? 'Sense nivell',
-            })),
+            altesErronies: baixesSenseGrup.length,
         };
-    }
-
-    /**
-     * Construeix un nom llegible conservant només els camps necessaris per al llistat.
-     * @param {Object} alumne
-     * @returns {string}
-     */
-    formataNomAlumne(alumne) {
-        const cognoms = [alumne.cognom1, alumne.cognom2].filter(Boolean).join(' ');
-        const nom = String(alumne.nom ?? '').trim();
-        return [cognoms, nom].filter(Boolean).join(', ') || 'Alumne sense nom';
     }
 
     /**

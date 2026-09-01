@@ -88,7 +88,7 @@ export class ContainerStyleManager {
 
             .powertoys-population-totals {
                 display: grid;
-                grid-template-columns: repeat(3, minmax(130px, 1fr));
+                grid-template-columns: repeat(4, minmax(130px, 1fr));
                 gap: 10px;
                 margin-bottom: 16px;
             }
