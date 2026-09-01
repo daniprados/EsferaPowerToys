@@ -28,6 +28,7 @@ describe('PopulationUIBuilder', () => {
         expect(panel.querySelector('.powertoys-population-table-wrapper')).not.toBeNull();
         expect(panel.querySelector('.powertoys-population-table tbody').textContent).toContain('ESO');
         expect(panel.querySelector('.powertoys-population-totals').textContent).toContain('Altes errònies sense grup1');
+        expect(panel.querySelector('.powertoys-population-errors-table')).toBeNull();
         expect(containerBuilder.createContainer).toHaveBeenCalledWith(
             expect.anything(),
             'powertoys-population-box',

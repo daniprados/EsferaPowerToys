@@ -52,6 +52,7 @@ describe('PopulationDataProvider', () => {
         expect(dades.totals).toEqual({ altes: 1, baixes: 1, totalCurs: 2 });
         expect(dades.estudis[0]).toMatchObject({ altes: 1, baixes: 1, totalCurs: 2 });
         expect(dades.altesErronies).toBe(1);
+        expect(JSON.stringify(dades)).not.toContain('Lovelace');
     });
 
     test('fa una cerca separada per a altes i baixes amb el curs indicat', async () => {

@@ -17,7 +17,7 @@ describe('PopulationFeatureManager', () => {
     });
 
     test('mostra les dades desades sense tornar a consultar l’API', async () => {
-        localStorage.setItem('powertoys_population_v2_2026/2027', JSON.stringify({
+        localStorage.setItem('powertoys_population_v3_2026/2027', JSON.stringify({
             cursEscolar: '2026/2027', calculatedAt: '2026-07-20T00:00:00.000Z',
             totals: { altes: 10, baixes: 2, totalCurs: 12 }, estudis: [],
         }));
@@ -46,7 +46,7 @@ describe('PopulationFeatureManager', () => {
         await manager.tryActivate();
 
         expect(dataProvider.calculaIndicadors).toHaveBeenCalledWith('2026/2027');
-        expect(JSON.parse(localStorage.getItem('powertoys_population_v2_2026/2027'))).toMatchObject({
+        expect(JSON.parse(localStorage.getItem('powertoys_population_v3_2026/2027'))).toMatchObject({
             cursEscolar: '2026/2027', totals: { altes: 1, baixes: 1, totalCurs: 2 },
         });
     });
