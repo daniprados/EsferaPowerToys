@@ -35,6 +35,27 @@ describe('PopulationDataProvider', () => {
         ]));
     });
 
+    test('exclou dels indicadors les baixes sense grup i les retorna com a altes errònies', () => {
+        const provider = new PopulationDataProvider({ log: jest.fn() }, jest.fn());
+
+        const dades = provider.agregaIndicadors(
+            [{ id_ensenyament: '1', ensenyament: 'ESO', nivell: 1, grup: '1A' }],
+            [
+                { id_ensenyament: '1', ensenyament: 'ESO', nivell: 1, grup: '1A' },
+                {
+                    id_ensenyament: '1', ensenyament: 'ESO', nivell: 1, grup: null,
+                    nom: 'Ada', cognom1: 'Lovelace', cognom2: 'Byron',
+                },
+            ],
+        );
+
+        expect(dades.totals).toEqual({ altes: 1, baixes: 1, totalCurs: 2 });
+        expect(dades.estudis[0]).toMatchObject({ altes: 1, baixes: 1, totalCurs: 2 });
+        expect(dades.altesErronies).toEqual([{
+            nom: 'Lovelace Byron, Ada', estudi: 'ESO', nivell: 1,
+        }]);
+    });
+
     test('fa una cerca separada per a altes i baixes amb el curs indicat', async () => {
         sessionStorage.setItem('TOKEN', '"token-de-prova"');
         sessionStorage.setItem('centre', JSON.stringify({ id: 54715, value: 'un-altre-centre' }));

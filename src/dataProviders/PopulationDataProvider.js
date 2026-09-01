@@ -1,5 +1,5 @@
 /**
- * Obté el recompte d'alumnat de la pantalla de fitxa, sense desar dades personals.
+ * Obté el recompte d'alumnat de la pantalla de fitxa.
  */
 export class PopulationDataProvider {
     /**
@@ -54,12 +54,15 @@ export class PopulationDataProvider {
     }
 
     /**
-     * Agrupa les matrícules per estudi i nivell, descartant qualsevol dada personal.
+     * Agrupa les matrícules per estudi i nivell. Les baixes sense grup es consideren
+     * altes errònies i es mantenen fora de tots els recomptes.
      * @param {Array<Object>} altes
      * @param {Array<Object>} baixes
      * @returns {Object}
      */
     agregaIndicadors(altes, baixes) {
+        const baixesSenseGrup = baixes.filter((alumne) => alumne.grup === null);
+        const baixesComputables = baixes.filter((alumne) => alumne.grup !== null);
         const estudis = new Map();
         const afegeix = (alumnes, camp) => alumnes.forEach((alumne) => {
             const id = String(alumne.id_ensenyament ?? 'sense-estudi');
@@ -72,7 +75,7 @@ export class PopulationDataProvider {
             estudi.nivells.get(nivell)[camp] += 1;
         });
         afegeix(altes, 'altes');
-        afegeix(baixes, 'baixes');
+        afegeix(baixesComputables, 'baixes');
 
         const normalitza = ({ altes, baixes, ...resta }) => ({
             ...resta,
@@ -83,9 +86,29 @@ export class PopulationDataProvider {
         });
         const perEstudi = [...estudis.values()].map(normalitza).sort((a, b) => a.estudi.localeCompare(b.estudi, 'ca'));
         return {
-            totals: { altes: altes.length, baixes: baixes.length, totalCurs: altes.length + baixes.length },
+            totals: {
+                altes: altes.length,
+                baixes: baixesComputables.length,
+                totalCurs: altes.length + baixesComputables.length,
+            },
             estudis: perEstudi,
+            altesErronies: baixesSenseGrup.map((alumne) => ({
+                nom: this.formataNomAlumne(alumne),
+                estudi: alumne.ensenyament || 'Estudi sense especificar',
+                nivell: alumne.nivell ?? 'Sense nivell',
+            })),
         };
+    }
+
+    /**
+     * Construeix un nom llegible conservant només els camps necessaris per al llistat.
+     * @param {Object} alumne
+     * @returns {string}
+     */
+    formataNomAlumne(alumne) {
+        const cognoms = [alumne.cognom1, alumne.cognom2].filter(Boolean).join(' ');
+        const nom = String(alumne.nom ?? '').trim();
+        return [cognoms, nom].filter(Boolean).join(', ') || 'Alumne sense nom';
     }
 
     /**
