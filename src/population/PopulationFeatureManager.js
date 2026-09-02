@@ -43,7 +43,7 @@ export class PopulationFeatureManager {
     }
 
     obteClauCache(cursEscolar) {
-        return `powertoys_population_${cursEscolar}`;
+        return `powertoys_population_v3_${cursEscolar}`;
     }
 
     obtéCache(cursEscolar) {

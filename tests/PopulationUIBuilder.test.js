@@ -21,11 +21,14 @@ describe('PopulationUIBuilder', () => {
             calculatedAt: '2026-07-20T00:00:00.000Z',
             totals: { totalCurs: 12, altes: 10, baixes: 2 },
             estudis: [{ estudi: 'ESO', totalCurs: 12, altes: 10, baixes: 2 }],
+            altesErronies: 1,
         }, jest.fn(), jest.fn());
 
-        expect(panel.querySelectorAll('.powertoys-population-metric')).toHaveLength(3);
+        expect(panel.querySelectorAll('.powertoys-population-metric')).toHaveLength(4);
         expect(panel.querySelector('.powertoys-population-table-wrapper')).not.toBeNull();
         expect(panel.querySelector('.powertoys-population-table tbody').textContent).toContain('ESO');
+        expect(panel.querySelector('.powertoys-population-totals').textContent).toContain('Altes errònies sense grup1');
+        expect(panel.querySelector('.powertoys-population-errors-table')).toBeNull();
         expect(containerBuilder.createContainer).toHaveBeenCalledWith(
             expect.anything(),
             'powertoys-population-box',

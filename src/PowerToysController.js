@@ -131,6 +131,9 @@ export class PowerToysController {
             }
         });
 
+        // El DOM pot estar completament renderitzat abans d'activar l'observador.
+        // Fem una primera comprovació per no dependre d'una mutació posterior.
+        this.reinicialitza();
 
         this.logger.log('PowerToysController → Observer activat');
     }

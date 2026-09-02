@@ -63,6 +63,7 @@ export class PopulationUIBuilder {
             ['Al llarg del curs', dades.totals.totalCurs],
             ['Actualment', dades.totals.altes],
             ['Baixes', dades.totals.baixes],
+            ['Altes errònies sense grup', dades.altesErronies ?? 0],
         ].forEach(([label, value]) => {
             const metric = document.createElement('div');
             metric.className = 'powertoys-population-metric';
