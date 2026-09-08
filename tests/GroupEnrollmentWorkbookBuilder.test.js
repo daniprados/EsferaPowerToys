@@ -10,16 +10,16 @@ describe('GroupEnrollmentWorkbookBuilder', () => {
                 codi: 'GAJ1C',
                 alumnes: [
                     {
-                        nomCerca: 'Alumna Un',
+                        idRalc: 700002, nom: 'Alumna', cognom1: 'Primer', cognom2: 'Un',
                         contingutsDocentsGrupDTO: [
-                            { idPare: null, codiContingutDocent: '0437_AG11', descripcio: 'Mòdul 1' },
+                            { idPare: null, codiContingutDocent: 'C056_AG10', descripcio: 'C056_AG10-Català/Aranès Professional (GM) ¬(C056_AG10)' },
                             { idPare: 'N1', codiContingutDocent: '0437_AG11_01RA', descripcio: 'RA 1' },
                         ],
                     },
                     {
-                        nom: 'Alumne', cognom1: 'Dos',
+                        idRalc: 700004, nom: 'Alumne', cognom1: 'Segon', cognom2: 'Dos',
                         contingutsDocentsGrupDTO: [
-                            { idPare: null, codiContingutDocent: '0438_AG11', descripcio: 'Mòdul 2' },
+                            { idPare: null, codiContingutDocent: '0438_AG11', descripcio: '0438_AG11-Xarxes (GS) ¬(0438_AG11)' },
                         ],
                     },
                 ],
@@ -29,10 +29,13 @@ describe('GroupEnrollmentWorkbookBuilder', () => {
 
         expect(workbook.worksheets.map((sheet) => sheet.name)).toEqual(['GAJ1C', 'GAJ2C']);
         const sheet = workbook.getWorksheet('GAJ1C');
-        expect(sheet.getRow(1).values.slice(1)).toEqual(['Alumne', '0437_AG11 - Mòdul 1', '0438_AG11 - Mòdul 2']);
-        expect(sheet.getRow(2).values.slice(1)).toEqual(['Alumna Un', 'X', '']);
-        expect(sheet.getRow(3).values.slice(1)).toEqual(['Alumne Dos', '', 'X']);
-        expect(sheet.views).toEqual([{ state: 'frozen', xSplit: 1, ySplit: 1 }]);
+        expect(sheet.getRow(1).values.slice(1)).toEqual([
+            'Idalu', 'Cognom1', 'Cognom2', 'Nom',
+            'C056 Català/Aranès Professional', '0438 Xarxes',
+        ]);
+        expect(sheet.getRow(2).values.slice(1)).toEqual([700002, 'Primer', 'Un', 'Alumna', 'X', '']);
+        expect(sheet.getRow(3).values.slice(1)).toEqual([700004, 'Segon', 'Dos', 'Alumne', '', 'X']);
+        expect(sheet.views).toEqual([{ state: 'frozen', xSplit: 4, ySplit: 1 }]);
     });
 
     test('genera noms de full vàlids i únics', () => {

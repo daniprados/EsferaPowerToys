@@ -92,9 +92,22 @@ export class GroupEnrollmentDataProvider {
         const id = Number(grup?.idGrupClasse ?? grup?.id ?? grup?.idGrup);
         if (!Number.isInteger(id) || id <= 0) return null;
 
-        const codi = String(grup?.codiGrup ?? grup?.codi ?? grup?.descGrup ?? id).trim();
+        const codi = this.obtéCodiCurtGrup(grup, id);
         const nom = String(grup?.descGrup ?? grup?.nomGrup ?? codi).trim();
         return { id, codi, nom };
+    }
+
+    /**
+     * Extreu el codi curt que apareix al final de la descripció del grup.
+     * @param {Object} grup
+     * @param {number} id
+     * @returns {string}
+     */
+    obtéCodiCurtGrup(grup, id) {
+        const descripcio = String(grup?.descGrup ?? grup?.nomGrup ?? '').trim();
+        const parts = descripcio.split(/\s+-\s+/);
+        if (parts.length > 1 && parts.at(-1).trim()) return parts.at(-1).trim();
+        return String(grup?.codiGrup ?? grup?.codi ?? descripcio ?? id).trim() || String(id);
     }
 
     /**

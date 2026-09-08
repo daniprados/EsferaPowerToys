@@ -71,4 +71,14 @@ describe('GroupEnrollmentDataProvider', () => {
         }));
         expect(resultat.alumnes.map((alumne) => alumne.nomCerca)).toEqual(['Alumna activa']);
     });
+
+    test('extreu el codi curt del final del nom del grup', () => {
+        const provider = new GroupEnrollmentDataProvider(logger, jest.fn());
+
+        expect(provider.normalitzaGrup({ id: 10, descGrup: 'CFPM    AG10101 - GA1A' })).toEqual({
+            id: 10,
+            codi: 'GA1A',
+            nom: 'CFPM    AG10101 - GA1A',
+        });
+    });
 });

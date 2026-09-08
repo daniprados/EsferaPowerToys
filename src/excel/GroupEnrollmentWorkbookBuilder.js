@@ -28,24 +28,30 @@ export class GroupEnrollmentWorkbookBuilder {
         const alumnes = Array.isArray(grup?.alumnes) ? grup.alumnes : [];
         const moduls = this.obtéModuls(alumnes);
         const worksheet = workbook.addWorksheet(this.creaNomFull(grup?.codi || grup?.nom, nomsUtilitzats));
-        const headers = ['Alumne', ...moduls.map((modul) => this.obtéEtiquetaModul(modul))];
+        const headers = ['Idalu', 'Cognom1', 'Cognom2', 'Nom', ...moduls.map((modul) => this.obtéEtiquetaModul(modul))];
 
         worksheet.addRow(headers);
         alumnes.forEach((alumne) => {
             const codisAlumne = new Set(this.obtéContingutsPrincipals(alumne).map((modul) => modul.codiContingutDocent));
             worksheet.addRow([
-                this.obtéNomAlumne(alumne),
+                alumne?.idRalc ?? '',
+                alumne?.cognom1 ?? '',
+                alumne?.cognom2 ?? '',
+                alumne?.nom ?? '',
                 ...moduls.map((modul) => codisAlumne.has(modul.codiContingutDocent) ? 'X' : ''),
             ]);
         });
 
-        worksheet.views = [{ state: 'frozen', xSplit: 1, ySplit: 1 }];
+        worksheet.views = [{ state: 'frozen', xSplit: 4, ySplit: 1 }];
         worksheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: Math.max(1, headers.length) } };
         worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
         worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
         worksheet.getRow(1).alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-        worksheet.getColumn(1).width = 38;
-        for (let column = 2; column <= headers.length; column += 1) {
+        worksheet.getColumn(1).width = 16;
+        worksheet.getColumn(2).width = 24;
+        worksheet.getColumn(3).width = 24;
+        worksheet.getColumn(4).width = 20;
+        for (let column = 5; column <= headers.length; column += 1) {
             worksheet.getColumn(column).width = 24;
             for (let row = 2; row <= worksheet.rowCount; row += 1) {
                 worksheet.getRow(row).getCell(column).alignment = { horizontal: 'center' };
@@ -75,12 +81,15 @@ export class GroupEnrollmentWorkbookBuilder {
 
     obtéEtiquetaModul(modul) {
         const codi = String(modul?.codiContingutDocent ?? '').trim();
-        const descripcio = String(modul?.descripcio ?? '').trim();
-        return descripcio ? `${codi} - ${descripcio}` : codi;
-    }
-
-    obtéNomAlumne(alumne) {
-        return String(alumne?.nomCerca ?? [alumne?.nom, alumne?.cognom1, alumne?.cognom2].filter(Boolean).join(' ')).trim();
+        const codiCurt = codi.split('_')[0];
+        const codiEscapat = codi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const descripcio = String(modul?.descripcio ?? '')
+            .replace(new RegExp(`^${codiEscapat}\\s*[-–—:]\\s*`, 'i'), '')
+            .replace(new RegExp(`\\s*¬?\\s*\\(${codiEscapat}\\)\\s*$`, 'i'), '')
+            .replace(/\s*\((?:GM|GS)\)(?=\s|$)/gi, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        return [codiCurt, descripcio].filter(Boolean).join(' ');
     }
 
     /**
