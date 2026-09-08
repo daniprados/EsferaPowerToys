@@ -137,6 +137,17 @@ export class ContainerStyleManager {
                 margin-bottom: 0;
             }
 
+            .powertoys-group-export-status {
+                display: inline-block;
+                margin-left: 10px;
+                color: #555;
+            }
+
+            .powertoys-group-export-status--error {
+                color: #a94442;
+                font-weight: 600;
+            }
+
             @media (max-width: 600px) {
                 .powertoys-population-totals {
                     grid-template-columns: 1fr;

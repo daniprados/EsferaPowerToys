@@ -22,6 +22,11 @@ import { VisualitzadorModal } from './visualitzador/VisualitzadorModal.js';
 import { PopulationDataProvider } from './dataProviders/PopulationDataProvider.js';
 import { PopulationUIBuilder } from './population/PopulationUIBuilder.js';
 import { PopulationFeatureManager } from './population/PopulationFeatureManager.js';
+import { GroupEnrollmentDataProvider } from './dataProviders/GroupEnrollmentDataProvider.js';
+import { GroupEnrollmentWorkbookBuilder } from './excel/GroupEnrollmentWorkbookBuilder.js';
+import { GroupEnrollmentExportManager } from './excel/GroupEnrollmentExportManager.js';
+import { GroupEnrollmentUIBuilder } from './excel/GroupEnrollmentUIBuilder.js';
+import { GroupEnrollmentFeatureManager } from './excel/GroupEnrollmentFeatureManager.js';
 /**
  * Classe principal que coordina les funcionalitats d'Esfer@ PowerToys.
  */
@@ -121,6 +126,23 @@ export class PowerToysController {
             this.containerBuilder,
         );
 
+        const groupEnrollmentExportManager = new GroupEnrollmentExportManager(
+            this.logger,
+            new GroupEnrollmentDataProvider(this.logger),
+            new GroupEnrollmentWorkbookBuilder(this.logger),
+        );
+
+        /** @type {GroupEnrollmentFeatureManager} */
+        this.groupEnrollmentFeatureManager = new GroupEnrollmentFeatureManager(
+            this.logger,
+            new GroupEnrollmentUIBuilder(
+                this.logger,
+                this.containerBuilder,
+                (table, onProgress) => groupEnrollmentExportManager.descarregaGrupsSeleccionats(table, onProgress),
+            ),
+            this.containerBuilder,
+        );
+
         const mainContainer = document.querySelector('#mainView') || document.body;
         this.observer = new MutationObserver(() => this.reinicialitza());
         this.observer.observe(mainContainer, { childList: true, subtree: true });
@@ -147,6 +169,7 @@ export class PowerToysController {
 
         this.materiaStyleManager.aplicaEstils();
         this.excelFeatureManager.tryActivate();
+        this.groupEnrollmentFeatureManager.tryActivate();
         this.populationFeatureManager.tryActivate();
         this.materiaFeatureManager.tryActivate();
     }
